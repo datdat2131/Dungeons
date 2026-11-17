@@ -1,0 +1,14 @@
+name: AstraXDungeon
+version: 0.1.0
+main: com.astrax.dungeon.AstraXDungeon
+api-version: '1.21'
+description: The Ultimate BoxMine Dungeon System
+softdepend: [MythicMobs, Vault, PlaceholderAPI, WorldGuard, WorldEdit]
+commands:
+  dungeon:
+    description: Menu Dungeon
+    aliases: [dg]
+    usage: /dungeon <next|list|join|leave|info|admin>
+permissions:
+  astrax.dungeon.use: { default: true }
+  astrax.dungeon.admin: { default: op }

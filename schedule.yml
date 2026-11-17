@@ -1,0 +1,11 @@
+enabled: true
+timezone: Asia/Ho_Chi_Minh
+open-every-hours: 1        # mở mỗi N giờ (căn theo giờ trong ngày)
+open-at-minute: 0          # phút mở trong giờ
+announce-at-minutes: [10, 5, 1]
+no-repeat: true            # không mở lại Dungeon vừa rồi
+golden-hour:
+  enabled: true
+  windows: ["20:00-22:00", "12:00-13:00"]
+  contribution-multiplier: 2.0
+  drop-multiplier: 1.5

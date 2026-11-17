@@ -1,0 +1,33 @@
+dungeon:
+  join-window-seconds: 120   # thời gian đầu để vào (WAITING)
+  late-join: true            # cho vào muộn khi đang chạy
+  max-duration-minutes: 40   # quá giờ sẽ bị cưỡng chế kết thúc
+  block-edit: false          # người trong Dungeon được phá/đặt block?
+# lobby được lưu bằng /dungeon admin setlobby
+  keep-inventory: true       # chet trong Dungeon khong mat do
+  reward-delay-seconds: 30   # sau khi Boss chet, doi bao lau roi dong Dungeon
+mobs:
+  cap: 40                    # so quai toi da cung luc
+  spawn-radius: 14           # quai spawn quanh nguoi choi trong ban kinh nay
+  elite-chance: 0.05         # ty le quai Tinh Anh (x3 mau, diem cao hon)
+  hp-per-player: 0.1         # +10% mau quai moi nguoi them
+  first-wave-delay-seconds: 5   # nghi truoc dot 1
+  wave-delay-seconds: 10        # nghi giua cac dot (va truoc Boss)
+  wave-clear-points: 20         # diem dong gop khi clear 1 dot
+  heal-between-waves: true      # hoi day mau + thuc an sau moi dot
+database:
+  type: sqlite               # sqlite | mysql
+  mysql:
+    host: localhost
+    port: 3306
+    database: astrax
+    user: root
+    password: ""
+reward:
+  min-points: 30             # diem dong gop toi thieu de nhan thuong chinh
+  afk-seconds: 120           # khong danh quai/boss trong ngan nay => coi la AFK
+  money-command: ""          # dung khi khong co Vault, vd: eco give {player} {amount}
+  broadcast-min-rarity: LEGENDARY
+party:
+  max-size: 10
+  invite-seconds: 60

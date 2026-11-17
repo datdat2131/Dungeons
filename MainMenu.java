@@ -1,0 +1,83 @@
+package com.astrax.dungeon.gui;
+
+import com.astrax.dungeon.AstraXDungeon;
+import com.astrax.dungeon.dungeon.DungeonDefinition;
+import com.astrax.dungeon.dungeon.DungeonSession;
+import com.astrax.dungeon.ranking.RankingManager;
+import com.astrax.dungeon.util.Text;
+import org.bukkit.Material;
+import org.bukkit.entity.Player;
+import org.bukkit.event.inventory.ClickType;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public final class MainMenu extends Menu {
+    private final Player viewer;
+
+    public MainMenu(AstraXDungeon plugin, Player viewer) {
+        super(plugin, 4, "&8AstraX Dungeon");
+        this.viewer = viewer;
+    }
+
+    @Override
+    protected void build() {
+        border();
+        inv.setItem(10, Items.make(Material.COMPASS, "&6Danh sách Dungeon", "&7Xem 6 Dungeon, Boss và phần thưởng"));
+        inv.setItem(12, statusItem());
+        inv.setItem(14, Items.make(Material.WHITE_BANNER, "&bParty", "&7Lập tổ đội, mời bạn bè", "&7Tối đa 10 người"));
+        inv.setItem(16, Items.make(Material.GOLD_INGOT, "&eBảng xếp hạng", "&7Top người chơi mạnh nhất"));
+        inv.setItem(20, Items.make(Material.CHEST, "&aPhần thưởng", "&7Xem bảng rơi đồ Dungeon hiện tại / kế tiếp"));
+        inv.setItem(22, Items.make(Material.BOOK, "&dThống kê của bạn", "&7Bấm để xem trong chat"));
+        if (plugin.dungeons().isInDungeon(viewer.getUniqueId())) {
+            inv.setItem(24, Items.make(Material.BARRIER, "&cRời Dungeon", "&7Về sảnh chờ"));
+        }
+    }
+
+    private org.bukkit.inventory.ItemStack statusItem() {
+        var m = plugin.messages();
+        DungeonSession s = plugin.dungeons().active();
+        List<String> lore = new ArrayList<>();
+        if (s != null) {
+            lore.add("&7Trạng thái: &f" + s.state());
+            lore.add("&7Số người: &f" + s.players().size());
+            lore.add("&7Biến thể: &d" + m.modifierName(s.modifier().name()));
+            if (s.contributionMultiplier() > 1) lore.add("&6✦ GIỜ VÀNG x" + s.contributionMultiplier());
+            lore.add(" ");
+            lore.add(plugin.dungeons().isInDungeon(viewer.getUniqueId()) ? "&7Bạn đang ở trong Dungeon" : "&e▶ Bấm để tham gia");
+            return Items.glow(Items.make(Material.LIME_CONCRETE, "&aĐang mở: " + s.def().displayName(), lore));
+        }
+        DungeonDefinition d = plugin.scheduler().nextDungeon();
+        lore.add("&7Dungeon: " + (d == null ? "&f-" : d.displayName()));
+        lore.add("&7Mở sau: &f" + Text.duration(Math.max(0, plugin.scheduler().secondsUntilNext())));
+        if (plugin.scheduler().nextIsGolden()) lore.add("&6✦ Lượt này rơi vào GIỜ VÀNG!");
+        return Items.make(Material.CLOCK, "&eDungeon kế tiếp", lore);
+    }
+
+    @Override
+    public void click(Player p, int slot, ClickType type) {
+        switch (slot) {
+            case 10 -> new DungeonMenu(plugin).open(p);
+            case 12 -> {
+                var s = plugin.dungeons().active();
+                if (s != null && !plugin.dungeons().isInDungeon(p.getUniqueId())) {
+                    p.closeInventory();
+                    plugin.dungeons().join(p);
+                    plugin.parties().pullMembers(p);
+                }
+            }
+            case 14 -> new PartyMenu(plugin, p).open(p);
+            case 16 -> new RankingMenu(plugin, RankingManager.Category.BOSS_KILLS).open(p);
+            case 20 -> {
+                DungeonDefinition d = plugin.dungeons().active() != null ? plugin.dungeons().active().def()
+                        : plugin.scheduler().nextDungeon();
+                if (d != null) new RewardMenu(plugin, d, this).open(p);
+            }
+            case 22 -> { p.closeInventory(); p.performCommand("dungeon stats"); }
+            case 24 -> {
+                if (plugin.dungeons().isInDungeon(p.getUniqueId())) { p.closeInventory(); plugin.dungeons().leave(p); }
+            }
+            default -> { }
+        }
+    }
+}
