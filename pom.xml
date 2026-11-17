@@ -40,10 +40,22 @@
     <finalName>AstraXDungeon</finalName>
     <sourceDirectory>${project.basedir}</sourceDirectory>
     <resources>
+      <!-- Keep plugin/config files at the JAR root. -->
       <resource>
         <directory>${project.basedir}</directory>
-        <includes><include>**/*.yml</include><include>**/*.yaml</include></includes>
-        <excludes><exclude>target/**</exclude><exclude>.github/**</exclude></excludes>
+        <includes><include>*.yml</include><include>*.yaml</include></includes>
+      </resource>
+      <!-- Preserve the required subfolders inside the JAR. -->
+      <resource>
+        <directory>${project.basedir}</directory>
+        <includes>
+          <include>dungeons/**/*.yml</include>
+          <include>dungeons/**/*.yaml</include>
+          <include>bosses/**/*.yml</include>
+          <include>bosses/**/*.yaml</include>
+          <include>rewards/**/*.yml</include>
+          <include>rewards/**/*.yaml</include>
+        </includes>
       </resource>
     </resources>
     <plugins>
@@ -53,6 +65,7 @@
         <version>3.13.0</version>
         <configuration>
           <release>21</release>
+          <includes><include>**/*.java</include></includes>
           <excludes><exclude>target/**</exclude></excludes>
         </configuration>
       </plugin>
