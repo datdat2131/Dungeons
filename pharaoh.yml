@@ -1,0 +1,31 @@
+id: pharaoh
+money: 1800          # tien co ban, nhan theo muc dong gop (x0.5 - x2)
+drops:
+  - id: pharaoh_relic
+    name: "Pharaoh Relic"
+    type: ITEM
+    material: GOLD_INGOT
+    amount: 1
+    chance: 15      # phan tram, co the dung so thap phan
+    rarity: EPIC
+    lore: ["&7Nguyên liệu dùng để nâng cấp trang bị."]
+    pity-step: 0.5  # moi lan xui them +0.5%
+    pity-max: 20    # toi da cong them 20%
+  - id: pharaoh_blade
+    name: "Pharaoh Blade"
+    type: ITEM
+    material: GOLDEN_SWORD
+    amount: 1
+    chance: 2
+    rarity: LEGENDARY
+    glow: true
+    lore: ["&7Vũ khí hiếm từ Boss."]
+    pity-step: 0.1
+    pity-max: 5
+  - id: pharaoh_title
+    name: "Pharaoh's Bane"
+    type: COMMAND
+    chance: 0.5
+    rarity: MYTHIC
+    commands:
+      - "say {player} vừa mở khóa danh hiệu Pharaoh's Bane!"

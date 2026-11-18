@@ -1,0 +1,18 @@
+id: abyssal_temple
+enabled: true
+display-name: "&bAbyssal Temple"
+weight: 10
+max-players: 30
+min-players: 1
+recommended-level: "1-15"
+world: dungeon_world
+boss:
+  id: ocean_lord
+rewards:
+  enabled: true
+  contribution-required: true
+waves:
+  - mobs: ["DROWNED:10"]
+  - mobs: ["DROWNED:8", "STRAY:4"]
+  - mobs: ["DROWNED:12", "SILVERFISH:6"]
+icon: PRISMARINE

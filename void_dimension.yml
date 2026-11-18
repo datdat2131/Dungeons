@@ -1,0 +1,18 @@
+id: void_dimension
+enabled: true
+display-name: "&5Void Dimension"
+weight: 6
+max-players: 30
+min-players: 1
+recommended-level: "5-20"
+world: dungeon_world
+boss:
+  id: void_emperor
+rewards:
+  enabled: true
+  contribution-required: true
+waves:
+  - mobs: ["ENDERMITE:10"]
+  - mobs: ["ENDERMAN:4", "SILVERFISH:8"]
+  - mobs: ["ENDERMAN:6", "ENDERMITE:10"]
+icon: END_STONE

@@ -1,0 +1,18 @@
+id: lost_pyramid
+enabled: true
+display-name: "&ePyramid Thất Lạc"
+weight: 10
+max-players: 30
+min-players: 1
+recommended-level: "1-15"
+world: dungeon_world
+boss:
+  id: pharaoh
+rewards:
+  enabled: true
+  contribution-required: true
+waves:
+  - mobs: ["HUSK:10"]
+  - mobs: ["HUSK:8", "SKELETON:6"]
+  - mobs: ["HUSK:12", "SPIDER:6"]
+icon: SANDSTONE

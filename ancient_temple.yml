@@ -1,0 +1,18 @@
+id: ancient_temple
+enabled: true
+display-name: "&6Ancient Temple"
+weight: 10
+max-players: 30
+min-players: 1
+recommended-level: "1-10"
+world: dungeon_world
+boss:
+  id: ancient_guardian
+rewards:
+  enabled: true
+  contribution-required: true
+waves:
+  - mobs: ["ZOMBIE:8", "SKELETON:4"]
+  - mobs: ["SKELETON:8", "SPIDER:4"]
+  - mobs: ["ZOMBIE:10", "HUSK:6"]
+icon: STONE_BRICKS

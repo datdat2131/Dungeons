@@ -1,0 +1,18 @@
+id: cursed_forest
+enabled: true
+display-name: "&2Cursed Forest"
+weight: 10
+max-players: 30
+min-players: 1
+recommended-level: "1-10"
+world: dungeon_world
+boss:
+  id: cursed_tree
+rewards:
+  enabled: true
+  contribution-required: true
+waves:
+  - mobs: ["SPIDER:8", "CAVE_SPIDER:6"]
+  - mobs: ["WITCH:3", "ZOMBIE:8"]
+  - mobs: ["WITCH:5", "SPIDER:10"]
+icon: DARK_OAK_LOG

@@ -1,0 +1,31 @@
+id: void_emperor
+money: 2500          # tien co ban, nhan theo muc dong gop (x0.5 - x2)
+drops:
+  - id: void_shard
+    name: "Void Shard"
+    type: ITEM
+    material: ENDER_EYE
+    amount: 1
+    chance: 15      # phan tram, co the dung so thap phan
+    rarity: EPIC
+    lore: ["&7Nguyên liệu dùng để nâng cấp trang bị."]
+    pity-step: 0.5  # moi lan xui them +0.5%
+    pity-max: 20    # toi da cong them 20%
+  - id: void_scythe
+    name: "Void Scythe"
+    type: ITEM
+    material: NETHERITE_HOE
+    amount: 1
+    chance: 2
+    rarity: LEGENDARY
+    glow: true
+    lore: ["&7Vũ khí hiếm từ Boss."]
+    pity-step: 0.1
+    pity-max: 5
+  - id: void_title
+    name: "Void Destroyer"
+    type: COMMAND
+    chance: 0.5
+    rarity: MYTHIC
+    commands:
+      - "say {player} vừa mở khóa danh hiệu Void Destroyer!"

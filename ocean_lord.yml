@@ -1,0 +1,31 @@
+id: ocean_lord
+money: 1500          # tien co ban, nhan theo muc dong gop (x0.5 - x2)
+drops:
+  - id: abyss_shard
+    name: "Abyss Shard"
+    type: ITEM
+    material: PRISMARINE_SHARD
+    amount: 1
+    chance: 15      # phan tram, co the dung so thap phan
+    rarity: EPIC
+    lore: ["&7Nguyên liệu dùng để nâng cấp trang bị."]
+    pity-step: 0.5  # moi lan xui them +0.5%
+    pity-max: 20    # toi da cong them 20%
+  - id: ocean_trident
+    name: "Ocean Trident"
+    type: ITEM
+    material: TRIDENT
+    amount: 1
+    chance: 2
+    rarity: LEGENDARY
+    glow: true
+    lore: ["&7Vũ khí hiếm từ Boss."]
+    pity-step: 0.1
+    pity-max: 5
+  - id: abyss_title
+    name: "Abyss Walker"
+    type: COMMAND
+    chance: 0.5
+    rarity: MYTHIC
+    commands:
+      - "say {player} vừa mở khóa danh hiệu Abyss Walker!"

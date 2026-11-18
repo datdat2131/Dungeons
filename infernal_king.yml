@@ -1,0 +1,31 @@
+id: infernal_king
+money: 1500          # tien co ban, nhan theo muc dong gop (x0.5 - x2)
+drops:
+  - id: infernal_core
+    name: "Infernal Core"
+    type: ITEM
+    material: MAGMA_CREAM
+    amount: 1
+    chance: 15      # phan tram, co the dung so thap phan
+    rarity: EPIC
+    lore: ["&7Nguyên liệu dùng để nâng cấp trang bị."]
+    pity-step: 0.5  # moi lan xui them +0.5%
+    pity-max: 20    # toi da cong them 20%
+  - id: infernal_blade
+    name: "Infernal Blade"
+    type: ITEM
+    material: NETHERITE_SWORD
+    amount: 1
+    chance: 2
+    rarity: LEGENDARY
+    glow: true
+    lore: ["&7Vũ khí hiếm từ Boss."]
+    pity-step: 0.1
+    pity-max: 5
+  - id: infernal_title
+    name: "Infernal Conqueror"
+    type: COMMAND
+    chance: 0.5
+    rarity: MYTHIC
+    commands:
+      - "say {player} vừa mở khóa danh hiệu Infernal Conqueror!"

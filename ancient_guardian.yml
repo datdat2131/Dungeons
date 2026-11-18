@@ -1,0 +1,31 @@
+id: ancient_guardian
+money: 1000          # tien co ban, nhan theo muc dong gop (x0.5 - x2)
+drops:
+  - id: ancient_core
+    name: "Ancient Core"
+    type: ITEM
+    material: NETHER_STAR
+    amount: 1
+    chance: 15      # phan tram, co the dung so thap phan
+    rarity: EPIC
+    lore: ["&7Nguyên liệu dùng để nâng cấp trang bị."]
+    pity-step: 0.5  # moi lan xui them +0.5%
+    pity-max: 20    # toi da cong them 20%
+  - id: guardian_sword
+    name: "Guardian Sword"
+    type: ITEM
+    material: DIAMOND_SWORD
+    amount: 1
+    chance: 2
+    rarity: LEGENDARY
+    glow: true
+    lore: ["&7Vũ khí hiếm từ Boss."]
+    pity-step: 0.1
+    pity-max: 5
+  - id: ancient_title
+    name: "Ancient Slayer"
+    type: COMMAND
+    chance: 0.5
+    rarity: MYTHIC
+    commands:
+      - "say {player} vừa mở khóa danh hiệu Ancient Slayer!"

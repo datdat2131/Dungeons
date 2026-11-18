@@ -1,0 +1,18 @@
+id: infernal_fortress
+enabled: true
+display-name: "&cInfernal Fortress"
+weight: 10
+max-players: 30
+min-players: 1
+recommended-level: "1-15"
+world: dungeon_world
+boss:
+  id: infernal_king
+rewards:
+  enabled: true
+  contribution-required: true
+waves:
+  - mobs: ["ZOMBIFIED_PIGLIN:8", "MAGMA_CUBE:4"]
+  - mobs: ["WITHER_SKELETON:6", "BLAZE:3"]
+  - mobs: ["WITHER_SKELETON:10", "BLAZE:5"]
+icon: NETHER_BRICKS
