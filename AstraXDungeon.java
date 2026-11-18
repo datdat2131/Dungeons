@@ -19,7 +19,11 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import com.astrax.dungeon.util.DefaultFiles;
 import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 
 public final class AstraXDungeon extends JavaPlugin {
 
@@ -108,8 +112,26 @@ public final class AstraXDungeon extends JavaPlugin {
         scheduler.reload();
     }
 
+    /** Uu tien resource trong jar; thieu thi tu tao ban mac dinh tu code (khong bao gio crash). */
     private void saveIfMissing(String path) {
-        if (!new File(getDataFolder(), path).exists()) saveResource(path, false);
+        File f = new File(getDataFolder(), path);
+        if (f.exists()) return;
+        if (getResource(path) != null) {
+            saveResource(path, false);
+            return;
+        }
+        String content = DefaultFiles.content(path);
+        if (content == null) {
+            getLogger().warning("Thieu file " + path + " trong jar va khong co ban mac dinh.");
+            return;
+        }
+        getLogger().warning("Jar thieu " + path + " -> tao tu ban mac dinh trong code.");
+        try {
+            f.getParentFile().mkdirs();
+            Files.writeString(f.toPath(), content, StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            getLogger().warning("Khong ghi duoc " + path + ": " + e.getMessage());
+        }
     }
 
     public static AstraXDungeon get() { return instance; }

@@ -38,23 +38,21 @@
 
   <build>
     <finalName>AstraXDungeon</finalName>
+    <!-- FLAT: file .java nam ngay thu muc goc -->
     <sourceDirectory>${project.basedir}</sourceDirectory>
     <resources>
-      <!-- Keep plugin/config files at the JAR root. -->
+      <!-- plugin.yml, config.yml, messages.yml, schedule.yml o goc jar -->
       <resource>
         <directory>${project.basedir}</directory>
-        <includes><include>*.yml</include><include>*.yaml</include></includes>
+        <includes><include>*.yml</include></includes>
       </resource>
-      <!-- Preserve the required subfolders inside the JAR. -->
+      <!-- giu nguyen 3 thu muc con trong jar -->
       <resource>
         <directory>${project.basedir}</directory>
         <includes>
           <include>dungeons/**/*.yml</include>
-          <include>dungeons/**/*.yaml</include>
           <include>bosses/**/*.yml</include>
-          <include>bosses/**/*.yaml</include>
           <include>rewards/**/*.yml</include>
-          <include>rewards/**/*.yaml</include>
         </includes>
       </resource>
     </resources>
@@ -65,8 +63,7 @@
         <version>3.13.0</version>
         <configuration>
           <release>21</release>
-          <includes><include>**/*.java</include></includes>
-          <excludes><exclude>target/**</exclude></excludes>
+          <includes><include>*.java</include></includes>
         </configuration>
       </plugin>
     </plugins>
