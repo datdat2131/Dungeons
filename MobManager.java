@@ -4,7 +4,7 @@ import com.astrax.dungeon.AstraXDungeon;
 import com.astrax.dungeon.dungeon.DungeonManager;
 import com.astrax.dungeon.dungeon.DungeonSession;
 import com.astrax.dungeon.dungeon.DungeonState;
-import com.astrax.dungeon.util.Text;
+import com.astrax.dungeon.tier.Tier;
 import net.kyori.adventure.bossbar.BossBar;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.title.Title;
@@ -21,8 +21,8 @@ import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
- * Chay Dungeon theo TUNG DOT wave:
- * NGHI (dem nguoc) -> DOT ACTIVE (spawn het quai cua dot) -> clear het moi sang dot sau -> het dot cuoi thi goi Boss.
+ * Chay Dungeon theo TUNG DOT: NGHI (dem nguoc) -> DOT ACTIVE (spawn het quai cua dot) -> clear het moi sang dot sau
+ * -> het dot cuoi thi goi Boss. Dot dac biet: ELITE, SWARM, MINIBOSS.
  */
 public final class MobManager {
     private enum Stage { INTERMISSION, ACTIVE }
@@ -30,27 +30,32 @@ public final class MobManager {
     private final AstraXDungeon plugin;
     private final DungeonManager dm;
     private final Set<UUID> alive = new HashSet<>();
-    private final Deque<String> queue = new ArrayDeque<>();
-    private List<List<String>> waves = List.of();
+    private final Deque<MobSpec> queue = new ArrayDeque<>();
+    private List<Wave> waves = List.of();
     private DungeonSession session;
+    private Tier tier;
     private BukkitTask task;
     private BossBar bar;
 
     private Stage stage = Stage.INTERMISSION;
     private int waveIdx;      // so dot DA bat dau (dot hien tai = waveIdx)
-    private int waveTotal;    // so quai cua dot hien tai
-    private int countdown;    // giay nghi con lai
-    private int delayTotal;   // tong giay nghi (de tinh thanh tien trinh)
+    private int waveTotal;
+    private int countdown;
+    private int delayTotal;
+    private String kind = "NORMAL";
 
     public MobManager(AstraXDungeon plugin, DungeonManager dm) {
         this.plugin = plugin;
         this.dm = dm;
     }
 
+    public int totalWaves() { return waves.size(); }
+
     public void start(DungeonSession s) {
         stopTask();
         session = s;
-        waves = s.def().waves();
+        tier = s.tier();
+        waves = WaveGenerator.generate(s.def(), tier);
         waveIdx = 0;
         waveTotal = 0;
         queue.clear();
@@ -70,7 +75,7 @@ public final class MobManager {
         });
 
         List<Player> ps = online();
-        if (ps.isEmpty()) return; // khong co nguoi => tam dung, khong ton tai nguyen
+        if (ps.isEmpty()) return; // khong co nguoi => tam dung
 
         if (stage == Stage.INTERMISSION) intermission(ps); else activeWave(ps);
     }
@@ -90,36 +95,41 @@ public final class MobManager {
     }
 
     private void startWave(List<Player> ps) {
-        loadWave(waveIdx);
+        Wave w = waves.get(waveIdx);
         waveIdx++;
+        queue.addAll(w.mobs());
         waveTotal = queue.size();
+        kind = w.kind();
         stage = Stage.ACTIVE;
 
         var m = plugin.messages();
         Title title = Title.title(m.plain("wave-title", "n", waveIdx, "total", waves.size()),
-                m.plain("wave-subtitle", "count", waveTotal));
+                m.plain("wave-kind-" + kind, "count", waveTotal));
         for (Player p : ps) {
             p.showTitle(title);
-            p.playSound(p.getLocation(), org.bukkit.Sound.EVENT_RAID_HORN, 1f, 1f);
+            p.playSound(p.getLocation(), org.bukkit.Sound.EVENT_RAID_HORN, 1f, kind.equals("MINIBOSS") ? 0.6f : 1f);
         }
         dm.broadcastSession(m.get("wave", "n", waveIdx, "total", waves.size()));
+        if (kind.equals("MINIBOSS")) dm.broadcastSession(m.get("wave-miniboss"));
     }
 
     // ---------- dot dang chay ----------
     private void activeWave(List<Player> ps) {
-        int cap = plugin.getConfig().getInt("mobs.cap", 40);
+        int cap = tier.mobCap();
         int radius = plugin.getConfig().getInt("mobs.spawn-radius", 14);
-        double eliteChance = plugin.getConfig().getDouble("mobs.elite-chance", 0.05);
+        double eliteChance = tier.eliteChance();
 
         int n = Math.min(Math.min(queue.size(), cap - alive.size()), 8);
         ThreadLocalRandom r = ThreadLocalRandom.current();
         for (int i = 0; i < n; i++) {
-            String spec = queue.poll();
-            if (spec == null) break;
+            MobSpec ms = queue.poll();
+            if (ms == null) break;
+            if (!ms.elite() && r.nextDouble() < eliteChance) {
+                ms = new MobSpec(ms.type(), ms.traits(), true, ms.hpMult(), ms.name());
+            }
             Location center = ps.get(r.nextInt(ps.size())).getLocation();
             Location at = MobSpawner.safeNear(center, radius);
-            boolean elite = r.nextDouble() < eliteChance;
-            plugin.spawner().spawn(spec, at, elite, ps.size(), e -> alive.add(e.getUniqueId()));
+            plugin.spawner().spawn(ms, at, ps.size(), tier, waveIdx, e -> alive.add(e.getUniqueId()));
         }
 
         updateWaveBar(ps);
@@ -131,14 +141,23 @@ public final class MobManager {
     private void updateWaveBar(List<Player> ps) {
         int left = queue.size() + alive.size();
         Component name = plugin.messages().plain("wave-bar", "n", waveIdx, "total", waves.size(), "left", left);
-        setBar(ps, name, (float) left / Math.max(1, waveTotal), BossBar.Color.RED);
+        BossBar.Color color = switch (kind) {
+            case "ELITE" -> BossBar.Color.YELLOW;
+            case "SWARM" -> BossBar.Color.PINK;
+            case "MINIBOSS" -> BossBar.Color.PURPLE;
+            default -> BossBar.Color.RED;
+        };
+        setBar(ps, name, (float) left / Math.max(1, waveTotal), color);
     }
 
     private void waveCleared(List<Player> ps) {
         var cfg = plugin.getConfig();
         var m = plugin.messages();
-        double pts = cfg.getDouble("mobs.wave-clear-points", 20);
-        for (UUID id : session.players()) session.addPoints(id, pts);
+        double pts = tier.waveClearPoints();
+        for (UUID id : session.players()) {
+            session.addPoints(id, pts);
+            plugin.quests().progress(id, "WAVES", "", 1);
+        }
 
         if (cfg.getBoolean("mobs.heal-between-waves", true)) {
             for (Player p : ps) {
@@ -150,22 +169,7 @@ public final class MobManager {
         dm.broadcastSession(m.get("wave-clear", "n", waveIdx, "points", (int) pts));
 
         stage = Stage.INTERMISSION;
-        delayTotal = countdown = cfg.getInt("mobs.wave-delay-seconds", 10);
-    }
-
-    private void loadWave(int idx) {
-        for (String entry : waves.get(idx)) {
-            String spec = entry;
-            int amount = 1;
-            int i = entry.lastIndexOf(':');
-            if (i > 0) {
-                try {
-                    amount = Integer.parseInt(entry.substring(i + 1).trim());
-                    spec = entry.substring(0, i).trim();
-                } catch (NumberFormatException ignored) { /* ten mythic co dau ':' */ }
-            }
-            for (int k = 0; k < amount; k++) queue.add(spec);
-        }
+        delayTotal = countdown = tier.waveDelaySeconds();
     }
 
     // ---------- tien ich ----------

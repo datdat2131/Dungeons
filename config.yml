@@ -31,3 +31,15 @@ reward:
 party:
   max-size: 10
   invite-seconds: 60
+revive:
+  enabled: true              # het mang nhung con dong doi song => guc cho cuu (thay vi bi loai ngay)
+  seconds: 5                 # so giay dong doi phai GIU SHIFT gan de cuu
+  timeout-seconds: 60        # qua thoi gian nay khong ai cuu => bi loai
+  lives-on-revive: 1         # so mang sau khi duoc cuu
+quests:
+  streak-bonus-per-day: 0.02 # chuoi ngay tham gia: +2% ty le roi moi ngay lien tiep
+  streak-max-bonus: 0.20     # toi da +20%
+discord:
+  webhook-url: ""            # dan link webhook Discord vao day de bat thong bao
+  notify-open: true          # bao khi Dungeon mo
+  notify-rare: true          # bao khi co nguoi nhan do hiem

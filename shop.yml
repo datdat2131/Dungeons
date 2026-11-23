@@ -1,0 +1,136 @@
+# Cua hang doi Token (/dungeon shop).
+# cost: {id_token: so_luong}. Token: common_token, epic_token, legendary_token, mythical_token.
+# daily-limit: gioi han moi nguoi moi ngay (0 hoac bo trong = khong gioi han).
+# Muc co id trung id token (epic_token...) la muc DOI TOKEN cap thap len cap cao.
+# Cac truong khac giong rewards/*.yml: type, material, amount, rarity, enchants, lore, glow, commands...
+items:
+  - id: shop_golden_apple
+    name: "Golden Apple x8"
+    type: ITEM
+    material: GOLDEN_APPLE
+    amount: 8
+    rarity: RARE
+    cost: {common_token: 2}
+  - id: shop_xp_bottles
+    name: "Experience Bottle x32"
+    type: ITEM
+    material: EXPERIENCE_BOTTLE
+    amount: 32
+    rarity: RARE
+    cost: {common_token: 3}
+  - id: shop_diamond_block
+    name: "Diamond Block x2"
+    type: ITEM
+    material: DIAMOND_BLOCK
+    amount: 2
+    rarity: EPIC
+    cost: {common_token: 6}
+    daily-limit: 5
+  - id: shop_xp_bottles_big
+    name: "Experience Bottle x64"
+    type: ITEM
+    material: EXPERIENCE_BOTTLE
+    amount: 64
+    rarity: EPIC
+    cost: {epic_token: 2}
+  - id: shop_enchanted_apple
+    name: "Enchanted Golden Apple x2"
+    type: ITEM
+    material: ENCHANTED_GOLDEN_APPLE
+    amount: 2
+    rarity: EPIC
+    cost: {epic_token: 3}
+    daily-limit: 3
+  - id: shop_totem
+    name: "Totem of Undying"
+    type: ITEM
+    material: TOTEM_OF_UNDYING
+    amount: 1
+    rarity: EPIC
+    cost: {epic_token: 6}
+    daily-limit: 2
+  - id: shop_netherite_ingot
+    name: "Netherite Ingot x2"
+    type: ITEM
+    material: NETHERITE_INGOT
+    amount: 2
+    rarity: LEGENDARY
+    cost: {epic_token: 10}
+    daily-limit: 2
+  - id: shop_beacon
+    name: "Beacon"
+    type: ITEM
+    material: BEACON
+    amount: 1
+    rarity: LEGENDARY
+    cost: {legendary_token: 8}
+    daily-limit: 1
+  - id: shop_elytra
+    name: "Elytra"
+    type: ITEM
+    material: ELYTRA
+    amount: 1
+    rarity: LEGENDARY
+    cost: {legendary_token: 20}
+    daily-limit: 1
+  - id: shop_dragon_head
+    name: "Dragon Head"
+    type: ITEM
+    material: DRAGON_HEAD
+    amount: 1
+    rarity: MYTHIC
+    cost: {legendary_token: 15}
+    daily-limit: 1
+  - id: shop_nether_star
+    name: "Nether Star"
+    type: ITEM
+    material: NETHER_STAR
+    amount: 1
+    rarity: MYTHIC
+    cost: {mythical_token: 5}
+    daily-limit: 3
+  - id: shop_dragon_egg
+    name: "Dragon Egg"
+    type: ITEM
+    material: DRAGON_EGG
+    amount: 1
+    rarity: DIVINE
+    glow: true
+    cost: {mythical_token: 30}
+    daily-limit: 1
+  - id: shop_pet_crate
+    name: "Hộp thú cưng huyền thoại"
+    type: COMMAND
+    rarity: MYTHIC
+    commands:
+      - "say {player} vừa mở Hộp thú cưng huyền thoại! (đổi lệnh này sang plugin pet của bạn)"
+    cost: {mythical_token: 10}
+    daily-limit: 2
+  # ---- doi token cap thap len cap cao (id phai trung id token) ----
+  - id: epic_token
+    name: "Epic Dungeon Token"
+    type: ITEM
+    material: EMERALD
+    amount: 1
+    rarity: EPIC
+    glow: true
+    lore: ["&7Doi tu 10 Common Token."]
+    cost: {common_token: 10}
+  - id: legendary_token
+    name: "Legendary Dungeon Token"
+    type: ITEM
+    material: DIAMOND
+    amount: 1
+    rarity: LEGENDARY
+    glow: true
+    lore: ["&7Doi tu 10 Epic Token."]
+    cost: {epic_token: 10}
+  - id: mythical_token
+    name: "Mythical Dungeon Token"
+    type: ITEM
+    material: NETHERITE_SCRAP
+    amount: 1
+    rarity: MYTHIC
+    glow: true
+    lore: ["&7Doi tu 10 Legendary Token."]
+    cost: {legendary_token: 10}

@@ -45,7 +45,8 @@ public final class RewardMenu extends Menu {
     private ItemStack display(LootTable.Drop d) {
         List<String> extra = new ArrayList<>();
         extra.add(" ");
-        extra.add("&7Tỷ lệ: &f" + d.chance() + "%");
+        if (d.guaranteed()) extra.add("&aLuôn nhận"); else extra.add("&7Tỷ lệ: &f" + d.chance() + "%");
+        if (d.onlyTop() > 0) extra.add("&dChỉ dành cho top " + d.onlyTop() + " sát thương");
         if (d.pityStep() > 0) extra.add("&8Pity: +" + d.pityStep() + "%/lần xui (tối đa +" + d.pityMax() + "%)");
         if ("ITEM".equals(d.type())) {
             ItemStack it = plugin.rewards().buildItem(d);

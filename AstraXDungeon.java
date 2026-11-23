@@ -3,7 +3,12 @@ package com.astrax.dungeon;
 import com.astrax.dungeon.command.DungeonCommand;
 import com.astrax.dungeon.database.Database;
 import com.astrax.dungeon.dungeon.DungeonManager;
+import com.astrax.dungeon.integration.DiscordHook;
 import com.astrax.dungeon.integration.PlaceholderHook;
+import com.astrax.dungeon.quest.QuestManager;
+import com.astrax.dungeon.revive.ReviveManager;
+import com.astrax.dungeon.reward.MailboxManager;
+import com.astrax.dungeon.shop.ShopManager;
 import com.astrax.dungeon.integration.VaultHook;
 import com.astrax.dungeon.listener.GUIListener;
 import com.astrax.dungeon.ranking.RankingManager;
@@ -14,6 +19,7 @@ import com.astrax.dungeon.party.PartyManager;
 import com.astrax.dungeon.reward.RewardDistributor;
 import com.astrax.dungeon.reward.RewardManager;
 import com.astrax.dungeon.schedule.DungeonScheduler;
+import com.astrax.dungeon.tier.TierManager;
 import com.astrax.dungeon.util.Messages;
 import org.bukkit.NamespacedKey;
 import org.bukkit.command.PluginCommand;
@@ -38,12 +44,18 @@ public final class AstraXDungeon extends JavaPlugin {
     private RewardDistributor distributor;
     private VaultHook vault;
     private RankingManager ranking;
-    private NamespacedKey mobKey, bossKey, eliteKey, itemKey;
+    private TierManager tiers;
+    private MailboxManager mailbox;
+    private ShopManager shop;
+    private QuestManager quests;
+    private ReviveManager revive;
+    private DiscordHook discord;
+    private NamespacedKey mobKey, bossKey, eliteKey, itemKey, dmgKey, traitKey, downKey;
 
     private static final String[] DUNGEONS = {"ancient_temple", "infernal_fortress", "abyssal_temple",
-            "cursed_forest", "lost_pyramid", "void_dimension"};
+            "cursed_forest", "lost_pyramid", "frozen_citadel", "void_dimension"};
     private static final String[] BOSSES = {"ancient_guardian", "infernal_king", "ocean_lord",
-            "cursed_tree", "pharaoh", "void_emperor"};
+            "cursed_tree", "pharaoh", "frost_titan", "void_emperor"};
 
     @Override
     public void onEnable() {
@@ -52,10 +64,15 @@ public final class AstraXDungeon extends JavaPlugin {
         bossKey = new NamespacedKey(this, "dungeon_boss");
         eliteKey = new NamespacedKey(this, "dungeon_elite");
         itemKey = new NamespacedKey(this, "dungeon_item");
+        dmgKey = new NamespacedKey(this, "dungeon_dmg");
+        traitKey = new NamespacedKey(this, "dungeon_traits");
+        downKey = new NamespacedKey(this, "dungeon_downed");
 
         saveDefaultConfig();
         saveIfMissing("messages.yml");
         saveIfMissing("schedule.yml");
+        saveIfMissing("shop.yml");
+        saveIfMissing("quests.yml");
         for (String id : DUNGEONS) saveIfMissing("dungeons/" + id + ".yml");
         for (String id : BOSSES) {
             saveIfMissing("bosses/" + id + ".yml");
@@ -63,6 +80,8 @@ public final class AstraXDungeon extends JavaPlugin {
         }
 
         messages = new Messages(this);
+        tiers = new TierManager(this);
+        tiers.load();
         database = new Database(this);
         database.init();
         if (getServer().getPluginManager().isPluginEnabled("Vault")) {
@@ -76,6 +95,14 @@ public final class AstraXDungeon extends JavaPlugin {
         distributor = new RewardDistributor(this);
         ranking = new RankingManager(this);
         ranking.start();
+        discord = new DiscordHook(this);
+        mailbox = new MailboxManager(this);
+        shop = new ShopManager(this);
+        shop.load();
+        quests = new QuestManager(this);
+        quests.start();
+        revive = new ReviveManager(this);
+        revive.start();
         dungeonManager = new DungeonManager(this);
         dungeonManager.loadAll();
         scheduler = new DungeonScheduler(this, dungeonManager);
@@ -101,12 +128,17 @@ public final class AstraXDungeon extends JavaPlugin {
     public void onDisable() {
         if (scheduler != null) scheduler.stop();
         if (dungeonManager != null) dungeonManager.end("stopped");
+        if (revive != null) revive.stop();
+        if (quests != null) quests.stop();
         if (database != null) database.shutdown();
     }
 
     public void reloadAll() {
         reloadConfig();
         messages.reload();
+        tiers.load();
+        shop.load();
+        quests.load();
         rewards.reload();
         dungeonManager.loadAll();
         scheduler.reload();
@@ -145,8 +177,17 @@ public final class AstraXDungeon extends JavaPlugin {
     public RewardDistributor distributor() { return distributor; }
     public VaultHook vault() { return vault; }
     public RankingManager ranking() { return ranking; }
+    public TierManager tiers() { return tiers; }
+    public MailboxManager mailbox() { return mailbox; }
+    public ShopManager shop() { return shop; }
+    public QuestManager quests() { return quests; }
+    public ReviveManager revive() { return revive; }
+    public DiscordHook discord() { return discord; }
+    public NamespacedKey downKey() { return downKey; }
     public NamespacedKey mobKey() { return mobKey; }
     public NamespacedKey bossKey() { return bossKey; }
     public NamespacedKey eliteKey() { return eliteKey; }
     public NamespacedKey itemKey() { return itemKey; }
+    public NamespacedKey dmgKey() { return dmgKey; }
+    public NamespacedKey traitKey() { return traitKey; }
 }

@@ -4,7 +4,12 @@ import com.astrax.dungeon.AstraXDungeon;
 import com.astrax.dungeon.boss.BossController;
 import com.astrax.dungeon.dungeon.DungeonSession;
 import com.astrax.dungeon.dungeon.Modifier;
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.attribute.Attribute;
+import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
 import org.bukkit.event.EventHandler;
@@ -17,6 +22,10 @@ import org.bukkit.event.entity.EntityRegainHealthEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
+
+import java.util.UUID;
 
 public final class CombatListener implements Listener {
     private final AstraXDungeon plugin;
@@ -28,6 +37,21 @@ public final class CombatListener implements Listener {
         Entity d = be.getDamager();
         if (d instanceof Projectile pr && pr.getShooter() instanceof Player ps) return ps;
         return d instanceof Player p ? p : null;
+    }
+
+    /** Quai (tagged) gay sat thuong: truc tiep hoac qua phi tieu. */
+    private LivingEntity mobAttacker(EntityDamageEvent e) {
+        if (!(e instanceof EntityDamageByEntityEvent be)) return null;
+        Entity d = be.getDamager();
+        if (d instanceof Projectile pr && pr.getShooter() instanceof LivingEntity shooter) d = shooter;
+        if (d instanceof LivingEntity le && !(le instanceof Player)
+                && le.getPersistentDataContainer().has(plugin.mobKey(), PersistentDataType.BYTE)) return le;
+        return null;
+    }
+
+    private String traits(Entity e) {
+        String t = e.getPersistentDataContainer().get(plugin.traitKey(), PersistentDataType.STRING);
+        return t == null ? "" : t;
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
@@ -47,16 +71,51 @@ public final class CombatListener implements Listener {
             return;
         }
 
-        // Danh quai Dungeon => ghi nhan hoat dong that
+        // Nguoi choi trong Dungeon bi quai danh: nhan he so sat thuong + dac tinh
+        if (e.getEntity() instanceof Player victim && dm.isInDungeon(victim.getUniqueId())) {
+            LivingEntity mob = mobAttacker(e);
+            if (mob != null) {
+                Double mult = mob.getPersistentDataContainer().get(plugin.dmgKey(), PersistentDataType.DOUBLE);
+                if (mult != null && mult != 1.0) e.setDamage(e.getDamage() * mult);
+                onMobHit(e, mob, victim);
+                return;
+            }
+        }
+
+        // Danh quai Dungeon => ghi nhan hoat dong that + dac tinh thorns
         if (plugin.spawner().isTagged(e.getEntity())) {
             Player a = attacker(e);
-            if (a != null && dm.active() != null && dm.isInDungeon(a.getUniqueId())) dm.active().touch(a.getUniqueId());
+            if (a != null && dm.active() != null && dm.isInDungeon(a.getUniqueId())) {
+                dm.active().touch(a.getUniqueId());
+                if (traits(e.getEntity()).contains("thorns")) {
+                    a.damage(Math.max(1.0, e.getFinalDamage() * 0.25)); // phan don, khong de quy
+                }
+            }
+            return;
         }
 
         // Chan PvP giua nguoi choi trong Dungeon
         if (e.getEntity() instanceof Player victim && dm.isInDungeon(victim.getUniqueId())) {
             Player src = attacker(e);
             if (src != null && dm.isInDungeon(src.getUniqueId())) e.setCancelled(true);
+        }
+    }
+
+    private void onMobHit(EntityDamageEvent e, LivingEntity mob, Player victim) {
+        String tr = traits(mob);
+        if (tr.isEmpty()) return;
+        for (String t : tr.split(",")) {
+            switch (t) {
+                case "vampire" -> {
+                    AttributeInstance max = mob.getAttribute(Attribute.MAX_HEALTH);
+                    if (max != null) mob.setHealth(Math.min(max.getValue(), mob.getHealth() + e.getFinalDamage() * 0.4));
+                }
+                case "venom" -> victim.addPotionEffect(new PotionEffect(PotionEffectType.POISON, 100, 1));
+                case "frost" -> victim.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 80, 1));
+                case "wither" -> victim.addPotionEffect(new PotionEffect(PotionEffectType.WITHER, 80, 0));
+                case "ignite" -> victim.setFireTicks(80);
+                default -> { }
+            }
         }
     }
 
@@ -76,10 +135,14 @@ public final class CombatListener implements Listener {
         if (k != null && s.players().contains(k.getUniqueId())) {
             boolean elite = pdc.has(plugin.eliteKey(), PersistentDataType.BYTE);
             s.addPoints(k.getUniqueId(), elite ? 15 : 5);
+            if (mob && !boss) {
+                plugin.quests().progress(k.getUniqueId(), "KILL_MOBS", "", 1);
+                if (elite) plugin.quests().progress(k.getUniqueId(), "KILL_ELITES", "", 1);
+            }
         }
-        if (mob && !boss && s.modifier() == Modifier.EXPLOSIVE_MOBS) {
+        if (mob && !boss && (s.modifier() == Modifier.EXPLOSIVE_MOBS || traits(e.getEntity()).contains("explosive"))) {
             var loc = e.getEntity().getLocation();
-            loc.getWorld().createExplosion(loc, 2f, false, false);
+            loc.getWorld().createExplosion(loc, 2.5f, false, false);
         }
     }
 
@@ -94,22 +157,61 @@ public final class CombatListener implements Listener {
         }
     }
 
-    // Chet trong Dungeon: giu do, hoi sinh tai spawn (tranh mat do khi choi PvE)
+    // Chet trong Dungeon: giu do, tru 1 mang. Het mang: con dong doi song => GUC cho cuu, khong thi bi loai.
     @EventHandler
     public void onPlayerDeath(PlayerDeathEvent e) {
-        if (!plugin.dungeons().isInDungeon(e.getPlayer().getUniqueId())) return;
-        if (!plugin.getConfig().getBoolean("dungeon.keep-inventory", true)) return;
-        e.setKeepInventory(true);
-        e.setKeepLevel(true);
-        e.getDrops().clear();
-        e.setDroppedExp(0);
+        Player p = e.getPlayer();
+        var s = plugin.dungeons().active();
+        if (s == null || !s.players().contains(p.getUniqueId())) return;
+
+        if (plugin.getConfig().getBoolean("dungeon.keep-inventory", true)) {
+            e.setKeepInventory(true);
+            e.setKeepLevel(true);
+            e.getDrops().clear();
+            e.setDroppedExp(0);
+        }
+        UUID id = p.getUniqueId();
+        s.addDeath(id);
+        int left = s.loseLife(id);
+        var m = plugin.messages();
+        if (left == 0) {
+            boolean canRevive = plugin.getConfig().getBoolean("revive.enabled", true)
+                    && plugin.revive().hasAliveTeammate(s, id);
+            if (canRevive) {
+                plugin.revive().markDowned(s, p);
+                p.sendMessage(m.get("downed"));
+            } else {
+                s.eliminated().add(id);
+                p.sendMessage(m.get("eliminated"));
+            }
+        } else if (left > 0) {
+            p.sendMessage(m.get("lives-left", "lives", left));
+        }
     }
 
     @EventHandler
     public void onRespawn(PlayerRespawnEvent e) {
         var s = plugin.dungeons().active();
-        if (s == null || !s.players().contains(e.getPlayer().getUniqueId())) return;
+        Player p = e.getPlayer();
+        if (s == null || !s.players().contains(p.getUniqueId())) return;
+
+        if (s.downed().contains(p.getUniqueId())) {
+            Location spot = plugin.revive().spot(p.getUniqueId());
+            if (spot != null) e.setRespawnLocation(spot);
+            plugin.revive().scheduleDownState(p);
+            return;
+        }
+        if (s.eliminated().contains(p.getUniqueId())) {
+            s.players().remove(p.getUniqueId());
+            var lobby = plugin.dungeons().lobby();
+            if (lobby != null) e.setRespawnLocation(lobby);
+            return;
+        }
         var spawn = s.def().spawn();
         if (spawn != null) e.setRespawnLocation(spawn);
+        // vai giay bat tu sau khi hoi sinh
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            if (p.isOnline()) p.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, 100, 4));
+        }, 2L);
     }
 }

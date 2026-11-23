@@ -27,7 +27,8 @@ public final class Messages {
 
     /** Thay {key} bang value theo cap: raw("opened", "dungeon", "X", "seconds", 120) */
     public String raw(String key, Object... kv) {
-        String s = cfg.getString(key, key);
+        String s = cfg.getString(key);
+        if (s == null) s = key;
         for (int i = 0; i + 1 < kv.length; i += 2) {
             s = s.replace("{" + kv[i] + "}", String.valueOf(kv[i + 1]));
         }

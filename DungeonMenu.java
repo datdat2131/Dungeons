@@ -28,6 +28,10 @@ public final class DungeonMenu extends Menu {
         for (DungeonDefinition d : plugin.dungeons().all()) {
             if (i >= SLOTS.length) break;
             List<String> lore = new ArrayList<>();
+            var tier = plugin.tiers().get(d.tier());
+            lore.add("&7Cấp độ: " + tier.displayName());
+            lore.add("&7Số đợt: &f" + tier.waves() + " &7| Mạng: &f" + (tier.lives() < 0 ? "vô hạn" : tier.lives()));
+            lore.add("&7Yêu cầu cấp: &f" + tier.minLevel());
             lore.add("&7Cấp đề xuất: &f" + d.recommendedLevel());
             lore.add("&7Boss: &c" + d.bossId().replace('_', ' '));
             lore.add("&7Tối đa: &f" + d.maxPlayers() + " người");

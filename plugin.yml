@@ -1,5 +1,5 @@
 name: AstraXDungeon
-version: 0.1.0
+version: 0.3.0
 main: com.astrax.dungeon.AstraXDungeon
 api-version: '1.21'
 description: The Ultimate BoxMine Dungeon System

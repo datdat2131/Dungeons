@@ -4,6 +4,8 @@ import com.astrax.dungeon.AstraXDungeon;
 import com.astrax.dungeon.dungeon.DungeonDefinition;
 import com.astrax.dungeon.gui.MainMenu;
 import com.astrax.dungeon.gui.RankingMenu;
+import com.astrax.dungeon.gui.ShopMenu;
+import com.astrax.dungeon.gui.QuestMenu;
 import com.astrax.dungeon.ranking.RankingManager;
 import com.astrax.dungeon.dungeon.Modifier;
 import com.astrax.dungeon.util.Text;
@@ -57,6 +59,19 @@ public final class DungeonCommand implements CommandExecutor, TabCompleter {
                 if (!(s instanceof Player p)) return true;
                 new RankingMenu(plugin, RankingManager.Category.BOSS_KILLS).open(p);
             }
+            case "claim" -> {
+                if (!(s instanceof Player p)) return true;
+                plugin.mailbox().claim(p);
+            }
+            case "shop" -> {
+                if (!(s instanceof Player p)) return true;
+                new ShopMenu(plugin, p).open(p);
+            }
+            case "quests" -> {
+                if (!(s instanceof Player p)) return true;
+                new QuestMenu(plugin, p).open(p);
+            }
+            case "tiers" -> tiers(s);
             case "admin" -> admin(s, a);
             default -> help(s);
         }
@@ -64,9 +79,18 @@ public final class DungeonCommand implements CommandExecutor, TabCompleter {
     }
 
     private void help(CommandSender s) {
-        s.sendMessage(Text.c("&6/dungeon &enext &7| &elist &7| &einfo <id> &7| &ejoin &7| &eleave &7| &erewards &7| &estats &7| &eparty"));
+        s.sendMessage(Text.c("&6/dungeon &enext &7| &elist &7| &einfo <id> &7| &ejoin &7| &eleave &7| &erewards &7| &estats &7| &eparty &7| &eclaim &7| &eshop &7| &equests"));
         if (s.hasPermission("astrax.dungeon.admin"))
             s.sendMessage(Text.c("&c/dungeon admin &7reload | start <id> | stop | setspawn <id> | setbossspawn <id> | setlobby | boss spawn/kill"));
+    }
+
+    private void tiers(CommandSender s) {
+        var m = plugin.messages();
+        for (var t : plugin.tiers().all()) {
+            s.sendMessage(m.plain("tiers-line", "tier", t.displayName(), "waves", t.waves(),
+                    "lives", t.lives() < 0 ? "vô hạn" : String.valueOf(t.lives()), "level", t.minLevel(),
+                    "mob", t.mobHealthMult(), "minutes", t.maxDurationMinutes()));
+        }
     }
 
     private void party(Player p, String[] a) {
@@ -123,7 +147,7 @@ public final class DungeonCommand implements CommandExecutor, TabCompleter {
 
     private void list(CommandSender s) {
         for (DungeonDefinition d : plugin.dungeons().all()) {
-            s.sendMessage(Text.c("&7- " + d.displayName() + " &8(" + d.id() + ") &7Lv " + d.recommendedLevel()
+            s.sendMessage(Text.c("&7- " + d.displayName() + " &8(" + d.id() + ") " + plugin.tiers().get(d.tier()).displayName() + " &7Lv " + d.recommendedLevel()
                     + (d.enabled() ? "" : " &c[tat]")));
         }
     }
@@ -185,7 +209,7 @@ public final class DungeonCommand implements CommandExecutor, TabCompleter {
     public List<String> onTabComplete(CommandSender s, Command c, String label, String[] a) {
         List<String> out = new ArrayList<>();
         if (a.length == 1) {
-            out.addAll(List.of("next", "list", "info", "join", "leave", "party", "rewards", "stats", "ranking", "menu"));
+            out.addAll(List.of("next", "list", "info", "join", "leave", "party", "rewards", "stats", "ranking", "menu", "tiers", "claim", "shop", "quests"));
             if (s.hasPermission("astrax.dungeon.admin")) out.add("admin");
         } else if (a.length == 2 && a[0].equalsIgnoreCase("party")) {
             out.addAll(List.of("create", "invite", "accept", "leave", "kick", "promote", "info"));

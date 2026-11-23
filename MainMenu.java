@@ -23,14 +23,17 @@ public final class MainMenu extends Menu {
     @Override
     protected void build() {
         border();
-        inv.setItem(10, Items.make(Material.COMPASS, "&6Danh sách Dungeon", "&7Xem 6 Dungeon, Boss và phần thưởng"));
+        inv.setItem(10, Items.make(Material.COMPASS, "&6Danh sách Dungeon", "&7Xem 7 Dungeon, Boss và phần thưởng"));
         inv.setItem(12, statusItem());
         inv.setItem(14, Items.make(Material.WHITE_BANNER, "&bParty", "&7Lập tổ đội, mời bạn bè", "&7Tối đa 10 người"));
         inv.setItem(16, Items.make(Material.GOLD_INGOT, "&eBảng xếp hạng", "&7Top người chơi mạnh nhất"));
-        inv.setItem(20, Items.make(Material.CHEST, "&aPhần thưởng", "&7Xem bảng rơi đồ Dungeon hiện tại / kế tiếp"));
-        inv.setItem(22, Items.make(Material.BOOK, "&dThống kê của bạn", "&7Bấm để xem trong chat"));
+        inv.setItem(19, Items.make(Material.CHEST, "&aPhần thưởng", "&7Bảng rơi đồ Dungeon hiện tại / kế tiếp"));
+        inv.setItem(20, Items.make(Material.EMERALD, "&2Cửa hàng Token", "&7Đổi Token lấy vật phẩm"));
+        inv.setItem(21, Items.make(Material.WRITABLE_BOOK, "&bNhiệm vụ", "&7Nhiệm vụ ngày/tuần và chuỗi ngày"));
+        inv.setItem(22, Items.make(Material.ENDER_CHEST, "&dHộp thư thưởng", "&7Nhận thưởng khi bạn offline", "&e▶ Bấm để nhận"));
+        inv.setItem(23, Items.make(Material.BOOK, "&fThống kê của bạn", "&7Bấm để xem trong chat"));
         if (plugin.dungeons().isInDungeon(viewer.getUniqueId())) {
-            inv.setItem(24, Items.make(Material.BARRIER, "&cRời Dungeon", "&7Về sảnh chờ"));
+            inv.setItem(25, Items.make(Material.BARRIER, "&cRời Dungeon", "&7Về sảnh chờ"));
         }
     }
 
@@ -39,6 +42,7 @@ public final class MainMenu extends Menu {
         DungeonSession s = plugin.dungeons().active();
         List<String> lore = new ArrayList<>();
         if (s != null) {
+            lore.add("&7Cấp độ: " + s.tier().displayName());
             lore.add("&7Trạng thái: &f" + s.state());
             lore.add("&7Số người: &f" + s.players().size());
             lore.add("&7Biến thể: &d" + m.modifierName(s.modifier().name()));
@@ -49,6 +53,7 @@ public final class MainMenu extends Menu {
         }
         DungeonDefinition d = plugin.scheduler().nextDungeon();
         lore.add("&7Dungeon: " + (d == null ? "&f-" : d.displayName()));
+        if (d != null) lore.add("&7Cấp độ: " + plugin.tiers().get(d.tier()).displayName());
         lore.add("&7Mở sau: &f" + Text.duration(Math.max(0, plugin.scheduler().secondsUntilNext())));
         if (plugin.scheduler().nextIsGolden()) lore.add("&6✦ Lượt này rơi vào GIỜ VÀNG!");
         return Items.make(Material.CLOCK, "&eDungeon kế tiếp", lore);
@@ -68,13 +73,16 @@ public final class MainMenu extends Menu {
             }
             case 14 -> new PartyMenu(plugin, p).open(p);
             case 16 -> new RankingMenu(plugin, RankingManager.Category.BOSS_KILLS).open(p);
-            case 20 -> {
+            case 19 -> {
                 DungeonDefinition d = plugin.dungeons().active() != null ? plugin.dungeons().active().def()
                         : plugin.scheduler().nextDungeon();
                 if (d != null) new RewardMenu(plugin, d, this).open(p);
             }
-            case 22 -> { p.closeInventory(); p.performCommand("dungeon stats"); }
-            case 24 -> {
+            case 20 -> new ShopMenu(plugin, p).open(p);
+            case 21 -> new QuestMenu(plugin, p).open(p);
+            case 22 -> { p.closeInventory(); plugin.mailbox().claim(p); }
+            case 23 -> { p.closeInventory(); p.performCommand("dungeon stats"); }
+            case 25 -> {
                 if (plugin.dungeons().isInDungeon(p.getUniqueId())) { p.closeInventory(); plugin.dungeons().leave(p); }
             }
             default -> { }

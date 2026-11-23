@@ -50,6 +50,7 @@ public final class PlaceholderHook extends PlaceholderExpansion {
                 Party p = plugin.parties().partyOf(id);
                 return String.valueOf(p == null ? 0 : p.size());
             }
+            case "streak": return String.valueOf(plugin.quests().effectiveStreak(id));
             case "level": return String.valueOf(RankingManager.levelOf(st == null ? 0 : st.points()));
             case "points": return String.valueOf(st == null ? 0 : (long) st.points());
             case "completions": return String.valueOf(st == null ? 0 : st.completions());

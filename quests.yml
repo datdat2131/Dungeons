@@ -1,0 +1,114 @@
+# Nhiem vu ngay/tuan (/dungeon quests). Moi ngay/tuan chon ngau nhien daily-count / weekly-count nhiem vu
+# (giong nhau cho moi nguoi). Loai (type):
+#   KILL_MOBS  KILL_ELITES  BOSS_DAMAGE  CLEAR_DUNGEON  CLEAR_TIER (param: COMMON/EPIC/LEGENDARY/MYTHICAL)
+#   WAVES  JOIN_DUNGEON  REVIVE  NO_DEATH_CLEAR (clear Dungeon ma khong chet lan nao)
+# reward.items dung dinh dang giong rewards/*.yml; id token phai la common_token/epic_token/legendary_token/mythical_token.
+daily-count: 3
+weekly-count: 3
+daily:
+  - id: d_kill_100
+    name: "&7Săn 100 quái trong Dungeon"
+    type: KILL_MOBS
+    amount: 100
+    reward:
+      money: 500
+      items:
+        - {id: common_token, name: "Common Dungeon Token", material: GOLD_NUGGET, amount: 2, rarity: RARE}
+  - id: d_kill_elites
+    name: "&6Hạ 10 quái Tinh Anh"
+    type: KILL_ELITES
+    amount: 10
+    reward:
+      money: 800
+      items:
+        - {id: common_token, name: "Common Dungeon Token", material: GOLD_NUGGET, amount: 3, rarity: RARE}
+  - id: d_clear_1
+    name: "&aHoàn thành 1 Dungeon"
+    type: CLEAR_DUNGEON
+    amount: 1
+    reward:
+      money: 1000
+      items:
+        - {id: common_token, name: "Common Dungeon Token", material: GOLD_NUGGET, amount: 2, rarity: RARE}
+  - id: d_join_2
+    name: "&bTham gia 2 lượt Dungeon"
+    type: JOIN_DUNGEON
+    amount: 2
+    reward:
+      money: 600
+      items:
+        - {id: common_token, name: "Common Dungeon Token", material: GOLD_NUGGET, amount: 1, rarity: RARE}
+  - id: d_waves_20
+    name: "&eClear 20 đợt wave"
+    type: WAVES
+    amount: 20
+    reward:
+      items:
+        - {id: epic_token, name: "Epic Dungeon Token", material: EMERALD, amount: 1, rarity: EPIC}
+  - id: d_revive_1
+    name: "&dCứu sống 1 đồng đội"
+    type: REVIVE
+    amount: 1
+    reward:
+      money: 500
+      items:
+        - {id: common_token, name: "Common Dungeon Token", material: GOLD_NUGGET, amount: 2, rarity: RARE}
+  - id: d_boss_dmg
+    name: "&cGây 30.000 sát thương lên Boss"
+    type: BOSS_DAMAGE
+    amount: 30000
+    reward:
+      money: 800
+      items:
+        - {id: common_token, name: "Common Dungeon Token", material: GOLD_NUGGET, amount: 1, rarity: RARE}
+weekly:
+  - id: w_kill_1000
+    name: "&7Săn 1.000 quái"
+    type: KILL_MOBS
+    amount: 1000
+    reward:
+      money: 3000
+      items:
+        - {id: epic_token, name: "Epic Dungeon Token", material: EMERALD, amount: 3, rarity: EPIC}
+  - id: w_clear_5
+    name: "&aHoàn thành 5 Dungeon"
+    type: CLEAR_DUNGEON
+    amount: 5
+    reward:
+      money: 5000
+      items:
+        - {id: epic_token, name: "Epic Dungeon Token", material: EMERALD, amount: 4, rarity: EPIC}
+  - id: w_clear_epic_2
+    name: "&5Hoàn thành 2 Dungeon Epic"
+    type: CLEAR_TIER
+    param: EPIC
+    amount: 2
+    reward:
+      money: 8000
+      items:
+        - {id: epic_token, name: "Epic Dungeon Token", material: EMERALD, amount: 3, rarity: EPIC}
+  - id: w_clear_legendary
+    name: "&6Hoàn thành 1 Dungeon Legendary"
+    type: CLEAR_TIER
+    param: LEGENDARY
+    amount: 1
+    reward:
+      money: 20000
+      items:
+        - {id: legendary_token, name: "Legendary Dungeon Token", material: DIAMOND, amount: 2, rarity: LEGENDARY}
+  - id: w_no_death_3
+    name: "&bClear 3 Dungeon không chết lần nào"
+    type: NO_DEATH_CLEAR
+    amount: 3
+    reward:
+      money: 10000
+      items:
+        - {id: mythical_token, name: "Mythical Dungeon Token", material: NETHERITE_SCRAP, amount: 1, rarity: MYTHIC}
+  - id: w_boss_dmg
+    name: "&cGây 300.000 sát thương lên Boss"
+    type: BOSS_DAMAGE
+    amount: 300000
+    reward:
+      money: 5000
+      items:
+        - {id: epic_token, name: "Epic Dungeon Token", material: EMERALD, amount: 2, rarity: EPIC}

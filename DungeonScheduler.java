@@ -87,6 +87,8 @@ public final class DungeonScheduler {
 
     private DungeonDefinition pick() {
         List<DungeonDefinition> pool = new ArrayList<>(dm.enabled());
+        // tier golden-only chi mo vao khung Gio Vang
+        if (nextOpen != null) pool.removeIf(d -> plugin.tiers().get(d.tier()).goldenOnly() && !golden.isActive(nextOpen));
         if (noRepeat && pool.size() > 1) pool.removeIf(d -> d.id().equals(lastId));
         if (pool.isEmpty()) return null;
         int total = pool.stream().mapToInt(DungeonDefinition::weight).sum();

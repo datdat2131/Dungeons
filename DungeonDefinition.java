@@ -29,6 +29,8 @@ public final class DungeonDefinition {
     public int minPlayers() { return yml.getInt("min-players", 1); }
     public int maxPlayers() { return yml.getInt("max-players", 30); }
     public String bossId() { return yml.getString("boss.id", ""); }
+    public String tier() { return yml.getString("tier", "COMMON").toUpperCase(); }
+    public org.bukkit.configuration.file.YamlConfiguration config() { return yml; }
     public String icon() { return yml.getString("icon", "PAPER"); }
     public String recommendedLevel() { return yml.getString("recommended-level", "?"); }
 

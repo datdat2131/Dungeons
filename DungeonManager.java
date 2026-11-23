@@ -4,6 +4,7 @@ import com.astrax.dungeon.AstraXDungeon;
 import com.astrax.dungeon.boss.BossController;
 import com.astrax.dungeon.boss.BossDefinition;
 import com.astrax.dungeon.mob.MobManager;
+import com.astrax.dungeon.tier.Tier;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -75,13 +76,19 @@ public final class DungeonManager {
     // ---------- vong doi ----------
     public void open(DungeonDefinition def, Modifier mod, double contribMult, double dropMult) {
         if (active != null) end("force-end-new");
-        final DungeonSession session = new DungeonSession(def, mod, contribMult, dropMult);
+        Tier tier = plugin.tiers().get(def.tier());
+        final DungeonSession session = new DungeonSession(def, tier, mod, contribMult, dropMult);
         active = session;
         int window = plugin.getConfig().getInt("dungeon.join-window-seconds", 120);
         var m = plugin.messages();
 
         Bukkit.broadcast(m.get("opened", "dungeon", def.displayName(), "seconds", window));
         Bukkit.broadcast(m.get("modifier", "name", m.modifierName(mod.name()), "desc", m.modifierDesc(mod.name())));
+        Bukkit.broadcast(m.get("tier-line", "tier", tier.displayName(), "waves", tier.waves(),
+                "lives", tier.lives() < 0 ? "vô hạn" : String.valueOf(tier.lives())));
+        if (plugin.getConfig().getBoolean("discord.notify-open", true)) {
+            plugin.discord().send("🏰 **" + def.displayName() + "** (" + tier.key() + ") vừa mở! Vào server gõ /dungeon join trong " + window + " giây.");
+        }
         if (contribMult > 1 || dropMult > 1) {
             Bukkit.broadcast(m.get("golden", "contrib", contribMult, "drop", dropMult));
         }
@@ -98,7 +105,7 @@ public final class DungeonManager {
     /** Goi moi giay boi scheduler: cuong che ket thuc khi qua gio. */
     public void tick() {
         if (active == null) return;
-        long max = plugin.getConfig().getLong("dungeon.max-duration-minutes", 40);
+        long max = active.tier().maxDurationMinutes();
         if (Duration.between(active.openedAt(), Instant.now()).toMinutes() >= max) end("time-up");
     }
 
@@ -153,6 +160,7 @@ public final class DungeonManager {
         if (joinTask != null) { joinTask.cancel(); joinTask = null; }
         if (boss != null) { boss.cleanup(); boss = null; }
         mobs.stop();
+        plugin.revive().clearAll();
         Bukkit.broadcast(plugin.messages().get(messageKey));
         Location lobby = lobby();
         for (UUID id : s.players()) {
@@ -167,6 +175,15 @@ public final class DungeonManager {
         var m = plugin.messages();
         DungeonSession s = active;
         if (s == null) { p.sendMessage(m.get("no-active")); return; }
+        if (s.eliminated().contains(p.getUniqueId())) { p.sendMessage(m.get("eliminated-block")); return; }
+        if (plugin.tiers().enforceLevel() && !p.hasPermission("astrax.dungeon.admin")) {
+            var st = plugin.ranking().stats(p.getUniqueId());
+            int lvl = com.astrax.dungeon.ranking.RankingManager.levelOf(st == null ? 0 : st.points());
+            if (lvl < s.tier().minLevel()) {
+                p.sendMessage(m.get("level-too-low", "need", s.tier().minLevel(), "have", lvl));
+                return;
+            }
+        }
         if (s.players().contains(p.getUniqueId())) { p.sendMessage(m.get("already-in")); return; }
         if (s.state() != DungeonState.WAITING && !plugin.getConfig().getBoolean("dungeon.late-join", true)) {
             p.sendMessage(m.get("closed-late")); return;
@@ -178,15 +195,20 @@ public final class DungeonManager {
         Location spawn = s.def().spawn();
         if (spawn == null) { p.sendMessage(m.get("no-spawn")); return; }
         s.players().add(p.getUniqueId());
+        s.participants().add(p.getUniqueId());
+        s.left().remove(p.getUniqueId());
         s.touch(p.getUniqueId());
         p.teleport(spawn);
         p.sendMessage(m.get("joined", "dungeon", s.def().displayName()));
+        plugin.quests().onDungeonJoin(p);
     }
 
     public void leave(Player p) {
         var m = plugin.messages();
         if (!isInDungeon(p.getUniqueId())) { p.sendMessage(m.get("not-in")); return; }
+        plugin.revive().release(p.getUniqueId());
         active.players().remove(p.getUniqueId());
+        active.left().add(p.getUniqueId());
         Location lobby = lobby();
         if (lobby != null) p.teleport(lobby);
         p.sendMessage(m.get("left"));
