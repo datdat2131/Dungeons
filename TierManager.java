@@ -69,7 +69,7 @@ public final class TierManager {
             "mob.health-mult", 1.0, "mob.damage-mult", 1.0, "mob.speed-mult", 1.0,
             "mob.wave-health-growth", 0.05, "mob.wave-damage-growth", 0.03,
             "mob.amount-base", 6.0, "mob.amount-growth", 1.2, "mob.elite-chance", 0.05, "mob.trait-chance", 0.10,
-            "mob.gear", "LEATHER", "mob.gear-chance", 0.4, "mob.effects", List.of(),
+            "mob.gear", "LEATHER", "mob.gear-chance", 0.4, "mob.effects", List.of(), "mob.skill-chance", 0.0,
             "boss.health-mult", 1.0, "boss.damage-mult", 1.0, "boss.skill-damage-mult", 1.0, "boss.enrage-seconds", 600,
             "reward.money-mult", 1.0, "reward.chance-mult", 1.0, "reward.points-mult", 1.0, "reward.min-points", 30.0,
             "golden-only", false);
@@ -80,7 +80,7 @@ public final class TierManager {
             "mob.health-mult", 2.5, "mob.damage-mult", 1.6, "mob.speed-mult", 1.05,
             "mob.wave-health-growth", 0.07, "mob.wave-damage-growth", 0.04,
             "mob.amount-base", 8.0, "mob.amount-growth", 1.5, "mob.elite-chance", 0.10, "mob.trait-chance", 0.25,
-            "mob.gear", "IRON", "mob.gear-chance", 0.7, "mob.effects", List.of(),
+            "mob.gear", "IRON", "mob.gear-chance", 0.7, "mob.effects", List.of(), "mob.skill-chance", 0.15,
             "boss.health-mult", 1.0, "boss.damage-mult", 1.0, "boss.skill-damage-mult", 1.0, "boss.enrage-seconds", 720,
             "reward.money-mult", 1.0, "reward.chance-mult", 1.0, "reward.points-mult", 1.5, "reward.min-points", 60.0,
             "golden-only", false);
@@ -91,7 +91,7 @@ public final class TierManager {
             "mob.health-mult", 5.0, "mob.damage-mult", 2.4, "mob.speed-mult", 1.10,
             "mob.wave-health-growth", 0.08, "mob.wave-damage-growth", 0.05,
             "mob.amount-base", 10.0, "mob.amount-growth", 1.7, "mob.elite-chance", 0.15, "mob.trait-chance", 0.40,
-            "mob.gear", "DIAMOND", "mob.gear-chance", 0.85, "mob.effects", List.of("RESISTANCE:0"),
+            "mob.gear", "DIAMOND", "mob.gear-chance", 0.85, "mob.effects", List.of("RESISTANCE:0"), "mob.skill-chance", 0.30,
             "boss.health-mult", 1.0, "boss.damage-mult", 1.0, "boss.skill-damage-mult", 1.0, "boss.enrage-seconds", 720,
             "reward.money-mult", 1.0, "reward.chance-mult", 1.0, "reward.points-mult", 2.0, "reward.min-points", 100.0,
             "golden-only", false);
@@ -102,7 +102,7 @@ public final class TierManager {
             "mob.health-mult", 10.0, "mob.damage-mult", 3.5, "mob.speed-mult", 1.15,
             "mob.wave-health-growth", 0.10, "mob.wave-damage-growth", 0.06,
             "mob.amount-base", 12.0, "mob.amount-growth", 2.0, "mob.elite-chance", 0.25, "mob.trait-chance", 0.65,
-            "mob.gear", "NETHERITE", "mob.gear-chance", 1.0, "mob.effects", List.of("RESISTANCE:1", "STRENGTH:0"),
+            "mob.gear", "NETHERITE", "mob.gear-chance", 1.0, "mob.effects", List.of("RESISTANCE:1", "STRENGTH:0"), "mob.skill-chance", 0.50,
             "boss.health-mult", 1.0, "boss.damage-mult", 1.0, "boss.skill-damage-mult", 1.0, "boss.enrage-seconds", 600,
             "reward.money-mult", 1.0, "reward.chance-mult", 1.0, "reward.points-mult", 3.0, "reward.min-points", 200.0,
             "golden-only", false);

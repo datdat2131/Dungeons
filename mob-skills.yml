@@ -1,0 +1,29 @@
+# Ky nang chu dong cua QUAI THUONG. Gan vao quai bang truong `skills: [ten, ...]` trong mob-pool / miniboss
+# cua dungeons/*.yml, hoac ngau nhien theo tiers.yml (mob.skill-chance, chi lay ky nang co random: true).
+# Boss cung dung duoc cac loai nay trong bosses/*.yml (leap, fireball, volley, heal, buff, self_buff).
+#
+# Truong chung:  type, cooldown (giay), range (khoang cach toi da toi nguoi choi), min-range, chance (0-1), random.
+# Loai ky nang (type):
+#   leap       nhay lao toi nguoi choi            strength, lift
+#   fireball   ban cau lua nho (co canh bao)      count, warn (tick)
+#   volley     ban loat mui ten                   count, spread, warn
+#   blast      vong no quanh quai (co vong hat canh bao)   radius, damage, warn, particle, effect "LOAI:cap:giay"
+#   heal       hoi mau quai dong minh quanh do    radius, percent (0.15 = 15%)
+#   buff       buff hieu ung cho quai dong minh   radius, effect
+#   self_buff  buff chinh minh                    effect
+#   summon     trieu hoi quai ho ve               mob, amount, hp-mult
+#   teleport   dich chuyen toi canh nguoi choi    warn
+# Sat thuong cua ky nang tu dong nhan he so sat thuong cua tier.
+skills:
+  leap: {type: leap, cooldown: 8, min-range: 4, range: 14, strength: 1.2, lift: 0.5}
+  shockwave: {type: blast, cooldown: 10, range: 6, radius: 4, damage: 6, warn: 20, particle: CRIT}
+  frost_nova: {type: blast, cooldown: 12, range: 7, radius: 5, damage: 4, warn: 20, particle: SNOWFLAKE, effect: "SLOWNESS:1:4"}
+  poison_cloud: {type: blast, cooldown: 12, range: 8, radius: 5, damage: 3, warn: 25, particle: WITCH, effect: "POISON:1:5"}
+  fireball: {type: fireball, cooldown: 7, range: 24, count: 1, warn: 12}
+  fire_barrage: {type: fireball, cooldown: 12, range: 24, count: 4, warn: 15, random: false}
+  volley: {type: volley, cooldown: 9, min-range: 5, range: 26, count: 5, spread: 0.12, warn: 10}
+  heal_pulse: {type: heal, cooldown: 14, range: 40, radius: 8, percent: 0.15}
+  war_cry: {type: buff, cooldown: 20, range: 30, radius: 10, effect: "SPEED:1:8", random: false}
+  iron_skin: {type: self_buff, cooldown: 16, range: 20, effect: "RESISTANCE:2:6"}
+  bodyguards: {type: summon, cooldown: 25, range: 30, mob: ZOMBIE, amount: 2, hp-mult: 0.6, random: false}
+  blink: {type: teleport, cooldown: 9, min-range: 6, range: 30, warn: 10}

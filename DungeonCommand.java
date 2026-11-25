@@ -6,6 +6,10 @@ import com.astrax.dungeon.gui.MainMenu;
 import com.astrax.dungeon.gui.RankingMenu;
 import com.astrax.dungeon.gui.ShopMenu;
 import com.astrax.dungeon.gui.QuestMenu;
+import com.astrax.dungeon.gui.AdminPanelMenu;
+import com.astrax.dungeon.gui.LootBossMenu;
+import com.astrax.dungeon.gui.LootEditMenu;
+import com.astrax.dungeon.gui.ShopEditMenu;
 import com.astrax.dungeon.ranking.RankingManager;
 import com.astrax.dungeon.dungeon.Modifier;
 import com.astrax.dungeon.util.Text;
@@ -81,7 +85,7 @@ public final class DungeonCommand implements CommandExecutor, TabCompleter {
     private void help(CommandSender s) {
         s.sendMessage(Text.c("&6/dungeon &enext &7| &elist &7| &einfo <id> &7| &ejoin &7| &eleave &7| &erewards &7| &estats &7| &eparty &7| &eclaim &7| &eshop &7| &equests"));
         if (s.hasPermission("astrax.dungeon.admin"))
-            s.sendMessage(Text.c("&c/dungeon admin &7reload | start <id> | stop | setspawn <id> | setbossspawn <id> | setlobby | boss spawn/kill"));
+            s.sendMessage(Text.c("&c/dungeon admin &7reload | start <id> | stop | setspawn <id> | setbossspawn <id> | setlobby | boss spawn/kill | edit | shopedit | lootedit [boss]"));
     }
 
     private void tiers(CommandSender s) {
@@ -196,6 +200,19 @@ public final class DungeonCommand implements CommandExecutor, TabCompleter {
                     p.sendMessage(m.get("bossspawn-set", "id", d.id()));
                 }, () -> p.sendMessage(m.get("unknown-dungeon", "id", a[2])));
             }
+            case "edit" -> {
+                if (!(s instanceof Player p)) return;
+                new AdminPanelMenu(plugin).open(p);
+            }
+            case "shopedit" -> {
+                if (!(s instanceof Player p)) return;
+                new ShopEditMenu(plugin).open(p);
+            }
+            case "lootedit" -> {
+                if (!(s instanceof Player p)) return;
+                if (a.length >= 3) new LootEditMenu(plugin, a[2], null).open(p);
+                else new LootBossMenu(plugin).open(p);
+            }
             case "setlobby" -> {
                 if (!(s instanceof Player p)) return;
                 plugin.dungeons().setLobby(p.getLocation());
@@ -214,7 +231,7 @@ public final class DungeonCommand implements CommandExecutor, TabCompleter {
         } else if (a.length == 2 && a[0].equalsIgnoreCase("party")) {
             out.addAll(List.of("create", "invite", "accept", "leave", "kick", "promote", "info"));
         } else if (a.length == 2 && a[0].equalsIgnoreCase("admin") && s.hasPermission("astrax.dungeon.admin")) {
-            out.addAll(List.of("reload", "start", "stop", "setspawn", "setbossspawn", "setlobby", "boss"));
+            out.addAll(List.of("reload", "start", "stop", "setspawn", "setbossspawn", "setlobby", "boss", "edit", "shopedit", "lootedit"));
         } else if ((a.length == 2 && (a[0].equalsIgnoreCase("info") || a[0].equalsIgnoreCase("rewards")))
                 || (a.length == 3 && a[0].equalsIgnoreCase("admin")
                 && (a[1].equalsIgnoreCase("start") || a[1].equalsIgnoreCase("setspawn") || a[1].equalsIgnoreCase("setbossspawn")))) {

@@ -25,6 +25,12 @@ public abstract class Menu implements InventoryHolder {
     protected abstract void build();
     public abstract void click(Player p, int slot, ClickType type);
 
+    /** Menu admin cho phep thao tac trong tui do cua chinh minh (de cam vat pham len con tro). */
+    public boolean allowBottomClicks() { return false; }
+
+    /** cursor = vat pham dang cam tren con tro (ban sao, khong bi lay mat) hoac null. */
+    public void clickWithCursor(Player p, int slot, ClickType type, ItemStack cursor) { click(p, slot, type); }
+
     public void open(Player p) {
         inv.clear();
         build();

@@ -32,10 +32,10 @@ phases:
   - at: 100
     skills: [ground_slam]
   - at: 70
-    skills: [ground_slam, summon_minions, energy_wave, shield]
+    skills: [ground_slam, summon_minions, energy_wave, shield, leap]
     message: "&7Ancient Guardian &7gầm lên, đá cổ rung chuyển!"
   - at: 35
-    skills: [ground_slam, energy_wave, meteor_strike, summon_minions]
+    skills: [ground_slam, energy_wave, meteor_strike, summon_minions, leap]
     enrage: true
 # Ky nang: type = blast | wave | meteor | summon | shield | lightning | pull | teleport
 # Moi ky nang deu co canh bao (warn = tick) truoc khi gay sat thuong. effect = "LOAI:cap:giay".
@@ -52,6 +52,7 @@ skills:
   blink: {type: teleport, cooldown: 14, radius: 5, damage: 12, warn: 20}
   summon_minions: {type: summon, cooldown: 25, mob: ZOMBIE, amount: 4, elite: false}
   shield: {type: shield, cooldown: 35, duration: 8, reduction: 0.7}
+  leap: {type: leap, cooldown: 10, strength: 1.5, lift: 0.6}
 """);
         M.put("bosses/cursed_tree.yml", """
 id: cursed_tree
@@ -69,10 +70,10 @@ phases:
   - at: 100
     skills: [poison_cloud]
   - at: 65
-    skills: [poison_cloud, summon_minions, shield, energy_wave]
+    skills: [poison_cloud, summon_minions, shield, energy_wave, thorn_volley]
     message: "&2Cursed Tree &2triệu hồi bầy nhện độc!"
   - at: 30
-    skills: [poison_cloud, lightning_storm, summon_minions, meteor_strike]
+    skills: [poison_cloud, lightning_storm, summon_minions, meteor_strike, thorn_volley]
     enrage: true
 # Ky nang: type = blast | wave | meteor | summon | shield | lightning | pull | teleport
 # Moi ky nang deu co canh bao (warn = tick) truoc khi gay sat thuong. effect = "LOAI:cap:giay".
@@ -89,6 +90,7 @@ skills:
   blink: {type: teleport, cooldown: 14, radius: 5, damage: 12, warn: 20}
   summon_minions: {type: summon, cooldown: 25, mob: CAVE_SPIDER, amount: 5, elite: false, traits: [venom]}
   shield: {type: shield, cooldown: 35, duration: 8, reduction: 0.7}
+  thorn_volley: {type: volley, cooldown: 9, count: 7, spread: 0.15, warn: 12}
 """);
         M.put("bosses/frost_titan.yml", """
 id: frost_titan
@@ -106,14 +108,14 @@ phases:
   - at: 100
     skills: [ground_slam, frost_nova]
   - at: 80
-    skills: [frost_nova, summon_minions, energy_wave, shield]
+    skills: [frost_nova, summon_minions, energy_wave, shield, ice_volley]
     message: "&bFrost Titan &bphủ băng giá khắp đấu trường!"
   - at: 60
-    skills: [gravity_pull, lightning_storm, frost_nova, blink]
+    skills: [gravity_pull, lightning_storm, frost_nova, blink, ice_volley, titan_leap]
   - at: 40
-    skills: [dark_explosion, meteor_strike, frost_nova, summon_minions, gravity_pull]
+    skills: [dark_explosion, meteor_strike, frost_nova, summon_minions, gravity_pull, ice_volley, titan_leap]
   - at: 20
-    skills: [dark_explosion, lightning_storm, frost_nova, blink, gravity_pull, meteor_strike]
+    skills: [dark_explosion, lightning_storm, frost_nova, blink, gravity_pull, meteor_strike, ice_volley, titan_leap]
     enrage: true
 # Ky nang: type = blast | wave | meteor | summon | shield | lightning | pull | teleport
 # Moi ky nang deu co canh bao (warn = tick) truoc khi gay sat thuong. effect = "LOAI:cap:giay".
@@ -130,6 +132,8 @@ skills:
   blink: {type: teleport, cooldown: 12, radius: 5, damage: 31, warn: 20}
   summon_minions: {type: summon, cooldown: 21, mob: STRAY, amount: 6, elite: true, traits: [frost]}
   shield: {type: shield, cooldown: 30, duration: 8, reduction: 0.7}
+  ice_volley: {type: volley, cooldown: 9, count: 8, warn: 12}
+  titan_leap: {type: leap, cooldown: 11, strength: 1.6, lift: 0.7}
 """);
         M.put("bosses/infernal_king.yml", """
 id: infernal_king
@@ -147,12 +151,12 @@ phases:
   - at: 100
     skills: [ground_slam, wither_nova]
   - at: 75
-    skills: [meteor_strike, summon_minions, energy_wave, ground_slam]
+    skills: [meteor_strike, summon_minions, energy_wave, ground_slam, fire_barrage]
     message: "&cInfernal King &cgọi mưa thiên thạch lửa!"
   - at: 50
-    skills: [dark_explosion, meteor_strike, shield, blink, wither_nova]
+    skills: [dark_explosion, meteor_strike, shield, blink, wither_nova, fire_barrage]
   - at: 25
-    skills: [dark_explosion, meteor_strike, lightning_storm, blink, summon_minions, gravity_pull]
+    skills: [dark_explosion, meteor_strike, lightning_storm, blink, summon_minions, gravity_pull, fire_barrage]
     enrage: true
 # Ky nang: type = blast | wave | meteor | summon | shield | lightning | pull | teleport
 # Moi ky nang deu co canh bao (warn = tick) truoc khi gay sat thuong. effect = "LOAI:cap:giay".
@@ -169,6 +173,7 @@ skills:
   blink: {type: teleport, cooldown: 13, radius: 5, damage: 20, warn: 20}
   summon_minions: {type: summon, cooldown: 23, mob: BLAZE, amount: 5, elite: false, traits: [ignite]}
   shield: {type: shield, cooldown: 32, duration: 8, reduction: 0.7}
+  fire_barrage: {type: fireball, cooldown: 10, count: 6, warn: 15}
 """);
         M.put("bosses/ocean_lord.yml", """
 id: ocean_lord
@@ -189,9 +194,9 @@ phases:
     skills: [gravity_pull, summon_minions, energy_wave, frost_nova]
     message: "&bOcean Lord &bkhuấy động đại dương!"
   - at: 50
-    skills: [lightning_storm, frost_nova, shield, blink, gravity_pull]
+    skills: [lightning_storm, frost_nova, shield, blink, gravity_pull, water_volley]
   - at: 25
-    skills: [lightning_storm, dark_explosion, gravity_pull, meteor_strike, frost_nova]
+    skills: [lightning_storm, dark_explosion, gravity_pull, meteor_strike, frost_nova, water_volley]
     enrage: true
 # Ky nang: type = blast | wave | meteor | summon | shield | lightning | pull | teleport
 # Moi ky nang deu co canh bao (warn = tick) truoc khi gay sat thuong. effect = "LOAI:cap:giay".
@@ -208,6 +213,7 @@ skills:
   blink: {type: teleport, cooldown: 13, radius: 5, damage: 20, warn: 20}
   summon_minions: {type: summon, cooldown: 23, mob: DROWNED, amount: 6, elite: false, traits: [frost]}
   shield: {type: shield, cooldown: 32, duration: 8, reduction: 0.7}
+  water_volley: {type: volley, cooldown: 9, count: 8, warn: 12}
 """);
         M.put("bosses/pharaoh.yml", """
 id: pharaoh
@@ -225,14 +231,14 @@ phases:
   - at: 100
     skills: [ground_slam, poison_cloud]
   - at: 80
-    skills: [summon_minions, energy_wave, meteor_strike, poison_cloud]
+    skills: [summon_minions, energy_wave, meteor_strike, poison_cloud, curse_bolts]
     message: "&ePharaoh &eđánh thức đội quân xác ướp!"
   - at: 60
-    skills: [gravity_pull, shield, blink, lightning_storm, ground_slam]
+    skills: [gravity_pull, shield, blink, lightning_storm, ground_slam, curse_bolts, mummy_heal]
   - at: 40
-    skills: [dark_explosion, meteor_strike, summon_minions, gravity_pull, poison_cloud]
+    skills: [dark_explosion, meteor_strike, summon_minions, gravity_pull, poison_cloud, curse_bolts, mummy_heal]
   - at: 20
-    skills: [dark_explosion, meteor_strike, lightning_storm, blink, gravity_pull, summon_minions]
+    skills: [dark_explosion, meteor_strike, lightning_storm, blink, gravity_pull, summon_minions, curse_bolts]
     enrage: true
 # Ky nang: type = blast | wave | meteor | summon | shield | lightning | pull | teleport
 # Moi ky nang deu co canh bao (warn = tick) truoc khi gay sat thuong. effect = "LOAI:cap:giay".
@@ -249,6 +255,8 @@ skills:
   blink: {type: teleport, cooldown: 12, radius: 5, damage: 31, warn: 20}
   summon_minions: {type: summon, cooldown: 21, mob: HUSK, amount: 6, elite: true, traits: [venom]}
   shield: {type: shield, cooldown: 30, duration: 8, reduction: 0.7}
+  curse_bolts: {type: fireball, cooldown: 10, count: 5, warn: 15}
+  mummy_heal: {type: heal, cooldown: 25, radius: 16, percent: 0.08}
 """);
         M.put("bosses/void_emperor.yml", """
 id: void_emperor
@@ -269,14 +277,14 @@ phases:
     skills: [blink, energy_wave, meteor_strike, summon_minions]
     message: "&5Void Emperor &5xé toạc không gian!"
   - at: 65
-    skills: [gravity_pull, lightning_storm, shield, blink, dark_explosion]
+    skills: [gravity_pull, lightning_storm, shield, blink, dark_explosion, void_leap]
   - at: 45
-    skills: [meteor_strike, dark_explosion, summon_minions, gravity_pull, lightning_storm, wither_nova]
+    skills: [meteor_strike, dark_explosion, summon_minions, gravity_pull, lightning_storm, wither_nova, void_bolts, void_leap]
   - at: 25
-    skills: [meteor_strike, dark_explosion, lightning_storm, blink, gravity_pull, wither_nova, summon_minions, energy_wave]
+    skills: [meteor_strike, dark_explosion, lightning_storm, blink, gravity_pull, wither_nova, summon_minions, energy_wave, void_bolts, void_leap, void_mend]
     message: "&5&lVoid Emperor &5triệu hồi hư vô tuyệt đối!"
   - at: 10
-    skills: [meteor_strike, dark_explosion, lightning_storm, blink, gravity_pull, wither_nova, summon_minions, energy_wave, frost_nova]
+    skills: [meteor_strike, dark_explosion, lightning_storm, blink, gravity_pull, wither_nova, summon_minions, energy_wave, frost_nova, void_bolts, void_leap, void_mend]
     enrage: true
 # Ky nang: type = blast | wave | meteor | summon | shield | lightning | pull | teleport
 # Moi ky nang deu co canh bao (warn = tick) truoc khi gay sat thuong. effect = "LOAI:cap:giay".
@@ -293,10 +301,14 @@ skills:
   blink: {type: teleport, cooldown: 11, radius: 5, damage: 48, warn: 20}
   summon_minions: {type: summon, cooldown: 20, mob: VEX, amount: 8, elite: true, traits: [swift, vampire]}
   shield: {type: shield, cooldown: 27, duration: 8, reduction: 0.8}
+  void_bolts: {type: fireball, cooldown: 9, count: 10, warn: 12}
+  void_leap: {type: leap, cooldown: 10, strength: 1.7, lift: 0.7}
+  void_mend: {type: heal, cooldown: 22, radius: 18, percent: 0.1}
 """);
         M.put("config.yml", """
 dungeon:
   join-window-seconds: 120   # thời gian đầu để vào (WAITING)
+  late-join-seconds: 180      # sau khi Dungeon bat dau, con ngan nay cho nguoi vao muon; het gio cong dong han
   late-join: true            # cho vào muộn khi đang chạy
   max-duration-minutes: 40   # quá giờ sẽ bị cưỡng chế kết thúc
   block-edit: false          # người trong Dungeon được phá/đặt block?
@@ -360,10 +372,10 @@ rewards:
 # Quai moi dot chon ngau nhien theo weight. min-wave = dot som nhat xuat hien.
 # traits: tank brute swift vampire venom frost ignite wither thorns explosive shielded
 mob-pool:
-  - {type: DROWNED, weight: 10, min-wave: 1}
-  - {type: STRAY, weight: 6, min-wave: 1, traits: [frost]}
+  - {type: DROWNED, weight: 10, min-wave: 1, skills: [frost_nova]}
+  - {type: STRAY, weight: 6, min-wave: 1, traits: [frost], skills: [volley]}
   - {type: SILVERFISH, weight: 6, min-wave: 1, traits: [venom]}
-  - {type: WITCH, weight: 4, min-wave: 2}
+  - {type: WITCH, weight: 4, min-wave: 2, skills: [poison_cloud]}
   - {type: VEX, weight: 5, min-wave: 3, traits: [swift]}
   - {type: VINDICATOR, weight: 4, min-wave: 3, traits: [brute, vampire]}
 # Mini-Boss o dot cuoi (so dot lay tu tier)
@@ -372,6 +384,7 @@ miniboss:
   name: "&bTide Warden"
   hp-mult: 12
   traits: [tank, vampire]
+  skills: [frost_nova, heal_pulse, bodyguards]
 # (tuy chon) ghi de so quai moi dot cua tier:
 # wave-scaling:
 #   amount-base: 6
@@ -397,10 +410,10 @@ rewards:
 # traits: tank brute swift vampire venom frost ignite wither thorns explosive shielded
 mob-pool:
   - {type: ZOMBIE, weight: 10, min-wave: 1}
-  - {type: SKELETON, weight: 8, min-wave: 1, traits: [swift]}
-  - {type: HUSK, weight: 6, min-wave: 2}
+  - {type: SKELETON, weight: 8, min-wave: 1, traits: [swift], skills: [volley]}
+  - {type: HUSK, weight: 6, min-wave: 2, skills: [leap]}
   - {type: SPIDER, weight: 6, min-wave: 2}
-  - {type: STRAY, weight: 4, min-wave: 3, traits: [frost]}
+  - {type: STRAY, weight: 4, min-wave: 3, traits: [frost], skills: [frost_nova]}
   - {type: VINDICATOR, weight: 3, min-wave: 4, traits: [brute]}
 # Mini-Boss o dot cuoi (so dot lay tu tier)
 miniboss:
@@ -408,6 +421,7 @@ miniboss:
   name: "&6Temple Warden"
   hp-mult: 6
   traits: [brute, tank]
+  skills: [shockwave, bodyguards]
 # (tuy chon) ghi de so quai moi dot cua tier:
 # wave-scaling:
 #   amount-base: 6
@@ -432,11 +446,11 @@ rewards:
 # Quai moi dot chon ngau nhien theo weight. min-wave = dot som nhat xuat hien.
 # traits: tank brute swift vampire venom frost ignite wither thorns explosive shielded
 mob-pool:
-  - {type: SPIDER, weight: 10, min-wave: 1}
+  - {type: SPIDER, weight: 10, min-wave: 1, skills: [leap]}
   - {type: CAVE_SPIDER, weight: 8, min-wave: 1, traits: [venom]}
   - {type: ZOMBIE, weight: 7, min-wave: 1, traits: [tank]}
-  - {type: SKELETON, weight: 4, min-wave: 2, traits: [venom]}
-  - {type: WITCH, weight: 4, min-wave: 3}
+  - {type: SKELETON, weight: 4, min-wave: 2, traits: [venom], skills: [volley]}
+  - {type: WITCH, weight: 4, min-wave: 3, skills: [poison_cloud]}
   - {type: VINDICATOR, weight: 3, min-wave: 3}
 # Mini-Boss o dot cuoi (so dot lay tu tier)
 miniboss:
@@ -444,6 +458,7 @@ miniboss:
   name: "&2Elder Treant"
   hp-mult: 5
   traits: [tank, brute]
+  skills: [shockwave, war_cry, bodyguards]
 # (tuy chon) ghi de so quai moi dot cua tier:
 # wave-scaling:
 #   amount-base: 6
@@ -468,18 +483,19 @@ rewards:
 # Quai moi dot chon ngau nhien theo weight. min-wave = dot som nhat xuat hien.
 # traits: tank brute swift vampire venom frost ignite wither thorns explosive shielded
 mob-pool:
-  - {type: STRAY, weight: 10, min-wave: 1, traits: [frost]}
-  - {type: ZOMBIE, weight: 8, min-wave: 1, traits: [thorns, tank]}
-  - {type: SKELETON, weight: 6, min-wave: 1, traits: [frost, swift]}
+  - {type: STRAY, weight: 10, min-wave: 1, traits: [frost], skills: [volley, frost_nova]}
+  - {type: ZOMBIE, weight: 8, min-wave: 1, traits: [thorns, tank], skills: [iron_skin]}
+  - {type: SKELETON, weight: 6, min-wave: 1, traits: [frost, swift], skills: [volley]}
   - {type: WITCH, weight: 4, min-wave: 2}
   - {type: VINDICATOR, weight: 5, min-wave: 3, traits: [brute]}
-  - {type: EVOKER, weight: 3, min-wave: 6}
+  - {type: EVOKER, weight: 3, min-wave: 6, skills: [heal_pulse]}
 # Mini-Boss o dot cuoi (so dot lay tu tier)
 miniboss:
   type: RAVAGER
   name: "&bGlacier Beast"
   hp-mult: 14
   traits: [frost, tank, thorns]
+  skills: [frost_nova, leap, war_cry]
 # (tuy chon) ghi de so quai moi dot cua tier:
 # wave-scaling:
 #   amount-base: 6
@@ -504,11 +520,11 @@ rewards:
 # Quai moi dot chon ngau nhien theo weight. min-wave = dot som nhat xuat hien.
 # traits: tank brute swift vampire venom frost ignite wither thorns explosive shielded
 mob-pool:
-  - {type: ZOMBIFIED_PIGLIN, weight: 10, min-wave: 1, traits: [ignite]}
+  - {type: ZOMBIFIED_PIGLIN, weight: 10, min-wave: 1, traits: [ignite], skills: [leap]}
   - {type: ZOMBIE, weight: 6, min-wave: 1, traits: [ignite]}
-  - {type: SKELETON, weight: 6, min-wave: 1, traits: [ignite]}
-  - {type: WITHER_SKELETON, weight: 8, min-wave: 2, traits: [wither]}
-  - {type: BLAZE, weight: 6, min-wave: 2, traits: [ignite]}
+  - {type: SKELETON, weight: 6, min-wave: 1, traits: [ignite], skills: [volley]}
+  - {type: WITHER_SKELETON, weight: 8, min-wave: 2, traits: [wither], skills: [shockwave]}
+  - {type: BLAZE, weight: 6, min-wave: 2, traits: [ignite], skills: [fireball]}
   - {type: VINDICATOR, weight: 5, min-wave: 4, traits: [brute]}
 # Mini-Boss o dot cuoi (so dot lay tu tier)
 miniboss:
@@ -516,6 +532,7 @@ miniboss:
   name: "&cFortress Overseer"
   hp-mult: 10
   traits: [brute, ignite, tank, wither]
+  skills: [fire_barrage, shockwave, war_cry]
 # (tuy chon) ghi de so quai moi dot cua tier:
 # wave-scaling:
 #   amount-base: 6
@@ -540,19 +557,20 @@ rewards:
 # Quai moi dot chon ngau nhien theo weight. min-wave = dot som nhat xuat hien.
 # traits: tank brute swift vampire venom frost ignite wither thorns explosive shielded
 mob-pool:
-  - {type: HUSK, weight: 10, min-wave: 1, traits: [venom]}
-  - {type: SKELETON, weight: 8, min-wave: 1, traits: [swift]}
+  - {type: HUSK, weight: 10, min-wave: 1, traits: [venom], skills: [leap]}
+  - {type: SKELETON, weight: 8, min-wave: 1, traits: [swift], skills: [volley]}
   - {type: SPIDER, weight: 6, min-wave: 1}
   - {type: CAVE_SPIDER, weight: 6, min-wave: 2, traits: [venom]}
-  - {type: WITHER_SKELETON, weight: 5, min-wave: 3, traits: [wither]}
+  - {type: WITHER_SKELETON, weight: 5, min-wave: 3, traits: [wither], skills: [shockwave]}
   - {type: VINDICATOR, weight: 5, min-wave: 4, traits: [brute, thorns]}
-  - {type: EVOKER, weight: 2, min-wave: 6}
+  - {type: EVOKER, weight: 2, min-wave: 6, skills: [heal_pulse]}
 # Mini-Boss o dot cuoi (so dot lay tu tier)
 miniboss:
   type: HUSK
   name: "&eMummy Lord"
   hp-mult: 14
   traits: [tank, brute, venom]
+  skills: [shockwave, bodyguards, war_cry]
 # (tuy chon) ghi de so quai moi dot cua tier:
 # wave-scaling:
 #   amount-base: 6
@@ -577,18 +595,19 @@ rewards:
 # Quai moi dot chon ngau nhien theo weight. min-wave = dot som nhat xuat hien.
 # traits: tank brute swift vampire venom frost ignite wither thorns explosive shielded
 mob-pool:
-  - {type: ENDERMAN, weight: 10, min-wave: 1, traits: [tank]}
+  - {type: ENDERMAN, weight: 10, min-wave: 1, traits: [tank], skills: [blink]}
   - {type: ENDERMITE, weight: 8, min-wave: 1, traits: [swift, venom]}
-  - {type: VINDICATOR, weight: 5, min-wave: 1, traits: [brute, vampire]}
-  - {type: WITHER_SKELETON, weight: 6, min-wave: 2, traits: [wither, brute]}
+  - {type: VINDICATOR, weight: 5, min-wave: 1, traits: [brute, vampire], skills: [leap]}
+  - {type: WITHER_SKELETON, weight: 6, min-wave: 2, traits: [wither, brute], skills: [fire_barrage]}
   - {type: VEX, weight: 6, min-wave: 2, traits: [swift, vampire]}
-  - {type: EVOKER, weight: 4, min-wave: 3}
+  - {type: EVOKER, weight: 4, min-wave: 3, skills: [heal_pulse]}
 # Mini-Boss o dot cuoi (so dot lay tu tier)
 miniboss:
   type: ENDERMAN
   name: "&5Void Walker"
   hp-mult: 16
   traits: [tank, vampire, swift, explosive]
+  skills: [blink, shockwave, bodyguards, fire_barrage]
 # (tuy chon) ghi de so quai moi dot cua tier:
 # wave-scaling:
 #   amount-base: 6
@@ -723,6 +742,41 @@ downed-wait: "&cChờ cứu... còn &f{sec}s"
 reviving: "&aĐang cứu &f{name}&a... &e{pct}%"
 revived: "&a&lBạn đã được cứu sống!"
 revive-done: "&a{reviver} &7đã cứu sống &a{name}&7!"
+join-closed: "&cCổng Dungeon đã đóng, không thể vào nữa! Chờ lượt sau."
+join-closed-announce: "&c&l⛔ Cổng Dungeon đã đóng! Không còn ai có thể vào nữa."
+join-closed-global: "&7Cổng &e{dungeon} &7đã đóng."
+join-window-late: "&6{dungeon} &ađã bắt đầu! &7Còn &e{minutes} phút &7cho người vào muộn (&e/dungeon join&7), sau đó cổng sẽ đóng hẳn."
+""");
+        M.put("mob-skills.yml", """
+# Ky nang chu dong cua QUAI THUONG. Gan vao quai bang truong `skills: [ten, ...]` trong mob-pool / miniboss
+# cua dungeons/*.yml, hoac ngau nhien theo tiers.yml (mob.skill-chance, chi lay ky nang co random: true).
+# Boss cung dung duoc cac loai nay trong bosses/*.yml (leap, fireball, volley, heal, buff, self_buff).
+#
+# Truong chung:  type, cooldown (giay), range (khoang cach toi da toi nguoi choi), min-range, chance (0-1), random.
+# Loai ky nang (type):
+#   leap       nhay lao toi nguoi choi            strength, lift
+#   fireball   ban cau lua nho (co canh bao)      count, warn (tick)
+#   volley     ban loat mui ten                   count, spread, warn
+#   blast      vong no quanh quai (co vong hat canh bao)   radius, damage, warn, particle, effect "LOAI:cap:giay"
+#   heal       hoi mau quai dong minh quanh do    radius, percent (0.15 = 15%)
+#   buff       buff hieu ung cho quai dong minh   radius, effect
+#   self_buff  buff chinh minh                    effect
+#   summon     trieu hoi quai ho ve               mob, amount, hp-mult
+#   teleport   dich chuyen toi canh nguoi choi    warn
+# Sat thuong cua ky nang tu dong nhan he so sat thuong cua tier.
+skills:
+  leap: {type: leap, cooldown: 8, min-range: 4, range: 14, strength: 1.2, lift: 0.5}
+  shockwave: {type: blast, cooldown: 10, range: 6, radius: 4, damage: 6, warn: 20, particle: CRIT}
+  frost_nova: {type: blast, cooldown: 12, range: 7, radius: 5, damage: 4, warn: 20, particle: SNOWFLAKE, effect: "SLOWNESS:1:4"}
+  poison_cloud: {type: blast, cooldown: 12, range: 8, radius: 5, damage: 3, warn: 25, particle: WITCH, effect: "POISON:1:5"}
+  fireball: {type: fireball, cooldown: 7, range: 24, count: 1, warn: 12}
+  fire_barrage: {type: fireball, cooldown: 12, range: 24, count: 4, warn: 15, random: false}
+  volley: {type: volley, cooldown: 9, min-range: 5, range: 26, count: 5, spread: 0.12, warn: 10}
+  heal_pulse: {type: heal, cooldown: 14, range: 40, radius: 8, percent: 0.15}
+  war_cry: {type: buff, cooldown: 20, range: 30, radius: 10, effect: "SPEED:1:8", random: false}
+  iron_skin: {type: self_buff, cooldown: 16, range: 20, effect: "RESISTANCE:2:6"}
+  bodyguards: {type: summon, cooldown: 25, range: 30, mob: ZOMBIE, amount: 2, hp-mult: 0.6, random: false}
+  blink: {type: teleport, cooldown: 9, min-range: 6, range: 30, warn: 10}
 """);
         M.put("quests.yml", """
 # Nhiem vu ngay/tuan (/dungeon quests). Moi ngay/tuan chon ngau nhien daily-count / weekly-count nhiem vu

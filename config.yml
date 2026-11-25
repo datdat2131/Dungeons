@@ -1,5 +1,6 @@
 dungeon:
   join-window-seconds: 120   # thời gian đầu để vào (WAITING)
+  late-join-seconds: 180      # sau khi Dungeon bat dau, con ngan nay cho nguoi vao muon; het gio cong dong han
   late-join: true            # cho vào muộn khi đang chạy
   max-duration-minutes: 40   # quá giờ sẽ bị cưỡng chế kết thúc
   block-edit: false          # người trong Dungeon được phá/đặt block?

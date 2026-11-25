@@ -14,6 +14,7 @@ import com.astrax.dungeon.listener.GUIListener;
 import com.astrax.dungeon.ranking.RankingManager;
 import com.astrax.dungeon.listener.CombatListener;
 import com.astrax.dungeon.listener.PlayerListener;
+import com.astrax.dungeon.mob.MobSkillManager;
 import com.astrax.dungeon.mob.MobSpawner;
 import com.astrax.dungeon.party.PartyManager;
 import com.astrax.dungeon.reward.RewardDistributor;
@@ -38,6 +39,7 @@ public final class AstraXDungeon extends JavaPlugin {
     private DungeonManager dungeonManager;
     private DungeonScheduler scheduler;
     private MobSpawner spawner;
+    private MobSkillManager mobSkills;
     private Database database;
     private PartyManager parties;
     private RewardManager rewards;
@@ -73,6 +75,7 @@ public final class AstraXDungeon extends JavaPlugin {
         saveIfMissing("schedule.yml");
         saveIfMissing("shop.yml");
         saveIfMissing("quests.yml");
+        saveIfMissing("mob-skills.yml");
         for (String id : DUNGEONS) saveIfMissing("dungeons/" + id + ".yml");
         for (String id : BOSSES) {
             saveIfMissing("bosses/" + id + ".yml");
@@ -90,6 +93,8 @@ public final class AstraXDungeon extends JavaPlugin {
         }
 
         spawner = new MobSpawner(this);
+        mobSkills = new MobSkillManager(this);
+        mobSkills.start();
         parties = new PartyManager(this);
         rewards = new RewardManager(this);
         distributor = new RewardDistributor(this);
@@ -129,6 +134,7 @@ public final class AstraXDungeon extends JavaPlugin {
         if (scheduler != null) scheduler.stop();
         if (dungeonManager != null) dungeonManager.end("stopped");
         if (revive != null) revive.stop();
+        if (mobSkills != null) mobSkills.stop();
         if (quests != null) quests.stop();
         if (database != null) database.shutdown();
     }
@@ -139,6 +145,7 @@ public final class AstraXDungeon extends JavaPlugin {
         tiers.load();
         shop.load();
         quests.load();
+        mobSkills.load();
         rewards.reload();
         dungeonManager.loadAll();
         scheduler.reload();
@@ -171,6 +178,7 @@ public final class AstraXDungeon extends JavaPlugin {
     public DungeonManager dungeons() { return dungeonManager; }
     public DungeonScheduler scheduler() { return scheduler; }
     public MobSpawner spawner() { return spawner; }
+    public MobSkillManager mobSkills() { return mobSkills; }
     public Database database() { return database; }
     public PartyManager parties() { return parties; }
     public RewardManager rewards() { return rewards; }

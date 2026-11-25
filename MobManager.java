@@ -51,6 +51,10 @@ public final class MobManager {
 
     public int totalWaves() { return waves.size(); }
 
+    /** Quai do ky nang/trieu hoi sinh ra: wave chi clear khi chung cung chet. */
+    public void track(UUID id) { alive.add(id); }
+    public int aliveCount() { return alive.size(); }
+
     public void start(DungeonSession s) {
         stopTask();
         session = s;
@@ -125,7 +129,7 @@ public final class MobManager {
             MobSpec ms = queue.poll();
             if (ms == null) break;
             if (!ms.elite() && r.nextDouble() < eliteChance) {
-                ms = new MobSpec(ms.type(), ms.traits(), true, ms.hpMult(), ms.name());
+                ms = new MobSpec(ms.type(), ms.traits(), true, ms.hpMult(), ms.name(), ms.skills());
             }
             Location center = ps.get(r.nextInt(ps.size())).getLocation();
             Location at = MobSpawner.safeNear(center, radius);
@@ -204,6 +208,7 @@ public final class MobManager {
         stopTask();
         hideBar();
         queue.clear();
+        plugin.mobSkills().clear();
         Set<World> worlds = new HashSet<>();
         if (session != null) {
             Location a = session.def().spawn();

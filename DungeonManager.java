@@ -24,6 +24,7 @@ public final class DungeonManager {
     private DungeonSession active;
     private BossController boss;
     private BukkitTask joinTask;
+    private BukkitTask closeTask;
 
     public DungeonManager(AstraXDungeon plugin) {
         this.plugin = plugin;
@@ -49,6 +50,7 @@ public final class DungeonManager {
     public List<DungeonDefinition> enabled() { return defs.values().stream().filter(DungeonDefinition::enabled).toList(); }
     public Optional<DungeonDefinition> get(String id) { return Optional.ofNullable(defs.get(id.toLowerCase())); }
     public DungeonSession active() { return active; }
+    public MobManager mobs() { return mobs; }
     public boolean isInDungeon(UUID id) { return active != null && active.players().contains(id); }
 
     public BossController bossOf(Entity e) {
@@ -79,7 +81,10 @@ public final class DungeonManager {
         Tier tier = plugin.tiers().get(def.tier());
         final DungeonSession session = new DungeonSession(def, tier, mod, contribMult, dropMult);
         active = session;
+        // Dungeon "bat dau" sau join-window (2 phut); them late-join (3 phut) cho nguoi vao muon; sau do dong cong han.
         int window = plugin.getConfig().getInt("dungeon.join-window-seconds", 120);
+        int late = plugin.getConfig().getInt("dungeon.late-join-seconds", 180);
+        session.joinClosesAt(System.currentTimeMillis() + (window + late) * 1000L);
         var m = plugin.messages();
 
         Bukkit.broadcast(m.get("opened", "dungeon", def.displayName(), "seconds", window));
@@ -93,10 +98,19 @@ public final class DungeonManager {
             Bukkit.broadcast(m.get("golden", "contrib", contribMult, "drop", dropMult));
         }
 
+        closeTask = Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            if (active == session) {
+                broadcastSession(m.get("join-closed-announce"));
+                Bukkit.broadcast(m.get("join-closed-global", "dungeon", def.displayName()));
+            }
+        }, (window + late) * 20L);
+
         joinTask = Bukkit.getScheduler().runTaskLater(plugin, () -> {
             if (active == session && session.state() == DungeonState.WAITING) {
                 session.state(DungeonState.RUNNING);
                 broadcastSession(m.get("started"));
+                Bukkit.broadcast(m.get("join-window-late", "dungeon", def.displayName(),
+                        "seconds", late, "minutes", Math.max(1, late / 60)));
                 mobs.start(session);
             }
         }, window * 20L);
@@ -158,6 +172,7 @@ public final class DungeonManager {
         if (s == null) return;
         s.state(DungeonState.RESETTING);
         if (joinTask != null) { joinTask.cancel(); joinTask = null; }
+        if (closeTask != null) { closeTask.cancel(); closeTask = null; }
         if (boss != null) { boss.cleanup(); boss = null; }
         mobs.stop();
         plugin.revive().clearAll();
@@ -185,8 +200,11 @@ public final class DungeonManager {
             }
         }
         if (s.players().contains(p.getUniqueId())) { p.sendMessage(m.get("already-in")); return; }
-        if (s.state() != DungeonState.WAITING && !plugin.getConfig().getBoolean("dungeon.late-join", true)) {
-            p.sendMessage(m.get("closed-late")); return;
+        // nguoi da tham gia truoc do (mat ket noi) duoc vao lai bat ke cong; nguoi moi chi vao khi cong con mo
+        boolean returning = s.participants().contains(p.getUniqueId()) && !s.left().contains(p.getUniqueId());
+        boolean afterStart = s.state() != DungeonState.WAITING;
+        if (!returning && (!s.joinOpen() || (afterStart && !plugin.getConfig().getBoolean("dungeon.late-join", true)))) {
+            p.sendMessage(m.get("join-closed")); return;
         }
         if (s.state() == DungeonState.REWARD || s.state() == DungeonState.RESETTING) {
             p.sendMessage(m.get("no-active")); return;

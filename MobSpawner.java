@@ -130,6 +130,15 @@ public final class MobSpawner {
         if (traits.contains("shielded")) e.setAbsorptionAmount(Math.min(1024, e.getHealth() * 0.5));
         for (String eff : tier.mobEffects()) EffectUtil.apply(e, eff, -1);
 
+        // ky nang chu dong: tu mob-pool + ngau nhien theo tier.mob.skill-chance
+        List<String> skills = new ArrayList<>(ms.skills());
+        List<String> skillPool = plugin.mobSkills().randomPool();
+        if (!skillPool.isEmpty() && r.nextDouble() < tier.skillChance()) {
+            String sk = skillPool.get(r.nextInt(skillPool.size()));
+            if (!skills.contains(sk)) skills.add(sk);
+        }
+        plugin.mobSkills().register(e, skills);
+
         if (ms.elite() || !traits.isEmpty() || ms.name() != null) {
             StringBuilder sb = new StringBuilder();
             if (ms.elite()) sb.append("&6★ ");

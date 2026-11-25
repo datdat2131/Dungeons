@@ -44,11 +44,13 @@ public final class MainMenu extends Menu {
         if (s != null) {
             lore.add("&7Cấp độ: " + s.tier().displayName());
             lore.add("&7Trạng thái: &f" + s.state());
+            lore.add(s.joinOpen() ? "&7Cổng vào đóng sau: &f" + Text.duration(s.joinSecondsLeft()) : "&cCổng đã đóng, không thể vào nữa");
             lore.add("&7Số người: &f" + s.players().size());
             lore.add("&7Biến thể: &d" + m.modifierName(s.modifier().name()));
             if (s.contributionMultiplier() > 1) lore.add("&6✦ GIỜ VÀNG x" + s.contributionMultiplier());
             lore.add(" ");
-            lore.add(plugin.dungeons().isInDungeon(viewer.getUniqueId()) ? "&7Bạn đang ở trong Dungeon" : "&e▶ Bấm để tham gia");
+            lore.add(plugin.dungeons().isInDungeon(viewer.getUniqueId()) ? "&7Bạn đang ở trong Dungeon"
+                    : s.joinOpen() ? "&e▶ Bấm để tham gia" : "&c✖ Cổng đã đóng");
             return Items.glow(Items.make(Material.LIME_CONCRETE, "&aĐang mở: " + s.def().displayName(), lore));
         }
         DungeonDefinition d = plugin.scheduler().nextDungeon();

@@ -48,6 +48,8 @@ public final class Tier {
     public String gear() { return s("mob.gear"); }
     public double gearChance() { return d("mob.gear-chance"); }
     public List<String> mobEffects() { return l("mob.effects"); }
+    /** Ty le quai thuong nhan them 1 ky nang ngau nhien tu mob-skills.yml. */
+    public double skillChance() { return d("mob.skill-chance"); }
 
     public double bossHealthMult() { return d("boss.health-mult"); }
     public double bossDamageMult() { return d("boss.damage-mult"); }

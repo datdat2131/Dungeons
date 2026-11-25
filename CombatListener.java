@@ -18,6 +18,9 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.entity.EntityTargetLivingEntityEvent;
+import org.bukkit.event.entity.PotionSplashEvent;
+import org.bukkit.entity.EvokerFangs;
 import org.bukkit.event.entity.EntityRegainHealthEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
@@ -25,12 +28,50 @@ import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.Set;
 import java.util.UUID;
 
 public final class CombatListener implements Listener {
     private final AstraXDungeon plugin;
 
     public CombatListener(AstraXDungeon plugin) { this.plugin = plugin; }
+
+    /** Nguon sat thuong khong phai nguoi choi nhung gay hai cho quai khac: no, phep, doc, lua... */
+    private static final Set<EntityDamageEvent.DamageCause> FRIENDLY_CAUSES = EnumSet.of(
+            EntityDamageEvent.DamageCause.BLOCK_EXPLOSION, EntityDamageEvent.DamageCause.ENTITY_EXPLOSION,
+            EntityDamageEvent.DamageCause.LIGHTNING, EntityDamageEvent.DamageCause.MAGIC,
+            EntityDamageEvent.DamageCause.POISON, EntityDamageEvent.DamageCause.WITHER,
+            EntityDamageEvent.DamageCause.FIRE, EntityDamageEvent.DamageCause.FIRE_TICK,
+            EntityDamageEvent.DamageCause.DRAGON_BREATH);
+
+    private boolean tagged(Entity e) { return plugin.spawner().isTagged(e); }
+
+    /** Sat thuong den tu 1 con quai khac (can chien, phi tieu, nanh Evoker). */
+    private boolean mobSource(EntityDamageEvent e) {
+        if (!(e instanceof EntityDamageByEntityEvent be)) return false;
+        Entity d = be.getDamager();
+        if (d instanceof Projectile pr && pr.getShooter() instanceof LivingEntity shooter) d = shooter;
+        if (d instanceof EvokerFangs ef && ef.getOwner() != null) d = ef.getOwner();
+        return d instanceof LivingEntity le && !(le instanceof Player) && tagged(le);
+    }
+
+    /** Quai cung phe khong duoc nham muc tieu nhau (Enderman/Endermite, Skeleton/Zombie...). */
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onTarget(EntityTargetLivingEntityEvent e) {
+        if (e.getTarget() != null && tagged(e.getEntity()) && tagged(e.getTarget())) e.setCancelled(true);
+    }
+
+    /** Binh phep cua Witch khong lam hai quai khac. */
+    @EventHandler
+    public void onSplash(PotionSplashEvent e) {
+        if (e.getPotion().getShooter() instanceof LivingEntity sh && tagged(sh)) {
+            for (LivingEntity le : new ArrayList<>(e.getAffectedEntities())) {
+                if (tagged(le)) e.setIntensity(le, 0);
+            }
+        }
+    }
 
     private Player attacker(EntityDamageEvent e) {
         if (!(e instanceof EntityDamageByEntityEvent be)) return null;
@@ -57,6 +98,12 @@ public final class CombatListener implements Listener {
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onDamage(EntityDamageEvent e) {
         var dm = plugin.dungeons();
+
+        // Quai KHONG duoc danh nhau (ban tien, no, phep, nanh...): huy sat thuong => khong bi "quay ra danh nhau"
+        if (tagged(e.getEntity())) {
+            if (mobSource(e)) { e.setCancelled(true); return; }
+            if (attacker(e) == null && FRIENDLY_CAUSES.contains(e.getCause())) { e.setCancelled(true); return; }
+        }
 
         // Damage len Boss: HP ao, chi nguoi trong Dungeon moi gay sat thuong duoc
         BossController bc = dm.bossOf(e.getEntity());

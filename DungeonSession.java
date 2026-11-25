@@ -30,6 +30,7 @@ public final class DungeonSession {
     private final Map<UUID, Long> quitAt = new ConcurrentHashMap<>();
     private final AtomicBoolean rewarded = new AtomicBoolean(false);
     private volatile DungeonState state = DungeonState.WAITING;
+    private volatile long joinClosesAt = Long.MAX_VALUE;
 
     public DungeonSession(DungeonDefinition def, Tier tier, Modifier modifier, double contribMult, double dropMult) {
         this.def = def;
@@ -40,6 +41,11 @@ public final class DungeonSession {
     }
 
     public String sessionId() { return sessionId; }
+
+    /** Thoi diem (ms) cong Dungeon dong han: nguoi moi khong the vao nua. */
+    public void joinClosesAt(long epochMs) { this.joinClosesAt = epochMs; }
+    public boolean joinOpen() { return System.currentTimeMillis() <= joinClosesAt; }
+    public long joinSecondsLeft() { return Math.max(0, (joinClosesAt - System.currentTimeMillis()) / 1000); }
     public DungeonDefinition def() { return def; }
     public Tier tier() { return tier; }
     public Modifier modifier() { return modifier; }

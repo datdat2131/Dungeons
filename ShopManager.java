@@ -13,6 +13,8 @@ import org.bukkit.persistence.PersistentDataType;
 import java.io.File;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,7 +24,27 @@ import java.util.Map;
  * Ho tro gioi han mua moi ngay (daily-limit) va doi token cap thap len cap cao.
  */
 public final class ShopManager {
-    public record Entry(String id, LootTable.Drop drop, Map<String, Integer> cost, int dailyLimit) {}
+    /** Muc cua hang - co the sua bang GUI admin. id trung id vat pham (drop.id). */
+    public static final class Entry {
+        private final String id;
+        private LootTable.Drop drop;
+        private final Map<String, Integer> cost;
+        private int dailyLimit;
+
+        public Entry(String id, LootTable.Drop drop, Map<String, Integer> cost, int dailyLimit) {
+            this.id = id;
+            this.drop = drop;
+            this.cost = cost;
+            this.dailyLimit = dailyLimit;
+        }
+
+        public String id() { return id; }
+        public LootTable.Drop drop() { return drop; }
+        public void drop(LootTable.Drop d) { this.drop = d; }
+        public Map<String, Integer> cost() { return cost; }
+        public int dailyLimit() { return dailyLimit; }
+        public void dailyLimit(int n) { this.dailyLimit = Math.max(0, n); }
+    }
 
     private final AstraXDungeon plugin;
     private final List<Entry> entries = new ArrayList<>();
@@ -46,6 +68,46 @@ public final class ShopManager {
     }
 
     public List<Entry> entries() { return entries; }
+
+    /** Ghi shop.yml (se mat comment cu). */
+    public void save() {
+        YamlConfiguration y = new YamlConfiguration();
+        y.options().setHeader(List.of("File nay duoc ghi boi GUI admin (/dungeon admin shopedit). Van co the sua tay.",
+                "cost: {id_token: so_luong}; daily-limit: gioi han moi nguoi moi ngay (0 = khong gioi han)."));
+        List<Map<String, Object>> list = new ArrayList<>();
+        for (Entry e : entries) {
+            Map<String, Object> m = LootTable.toMap(e.drop());
+            m.remove("chance");
+            m.put("id", e.id());
+            m.put("cost", new LinkedHashMap<>(e.cost()));
+            if (e.dailyLimit() > 0) m.put("daily-limit", e.dailyLimit());
+            list.add(m);
+        }
+        y.set("items", list);
+        try {
+            y.save(new File(plugin.getDataFolder(), "shop.yml"));
+        } catch (java.io.IOException ex) {
+            plugin.getLogger().warning("Khong ghi duoc shop.yml: " + ex.getMessage());
+        }
+    }
+
+    /** Them muc moi tu vat pham admin dang cam (gia mac dinh 1 Common Token). */
+    public Entry addEntry(ItemStack item) {
+        Set<String> used = new HashSet<>();
+        for (Entry e : entries) used.add(e.id());
+        LootTable.Drop d = plugin.rewards().dropFromItem(item, 100, com.astrax.dungeon.reward.Rarity.RARE, used);
+        Map<String, Integer> cost = new LinkedHashMap<>();
+        cost.put("common_token", 1);
+        Entry e = new Entry(d.id(), d, cost, 0);
+        entries.add(e);
+        save();
+        return e;
+    }
+
+    public void remove(Entry e) {
+        entries.remove(e);
+        save();
+    }
 
     public static String pretty(String id) {
         StringBuilder sb = new StringBuilder();

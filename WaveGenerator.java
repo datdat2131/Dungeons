@@ -15,7 +15,7 @@ import java.util.concurrent.ThreadLocalRandom;
  * Dot cuoi = MINIBOSS, moi 5 dot = ELITE, dot 3,7,11... = SWARM. Neu Dungeon co 'waves:' thu cong thi dung no.
  */
 public final class WaveGenerator {
-    private record Pool(String type, int weight, int minWave, List<String> traits) {}
+    private record Pool(String type, int weight, int minWave, List<String> traits, List<String> skills) {}
 
     private WaveGenerator() {}
 
@@ -50,9 +50,11 @@ public final class WaveGenerator {
             int minWave = m.get("min-wave") instanceof Number mn ? mn.intValue() : 1;
             List<String> traits = new ArrayList<>();
             if (m.get("traits") instanceof List<?> l) for (Object o : l) traits.add(String.valueOf(o).toLowerCase());
-            pool.add(new Pool(type, Math.max(1, weight), minWave, traits));
+            List<String> skl = new ArrayList<>();
+            if (m.get("skills") instanceof List<?> sl) for (Object o : sl) skl.add(String.valueOf(o));
+            pool.add(new Pool(type, Math.max(1, weight), minWave, traits, skl));
         }
-        if (pool.isEmpty()) pool.add(new Pool("ZOMBIE", 10, 1, List.of()));
+        if (pool.isEmpty()) pool.add(new Pool("ZOMBIE", 10, 1, List.of(), List.of()));
 
         ConfigurationSection mb = c.getConfigurationSection("miniboss");
         double base = c.getDouble("wave-scaling.amount-base", tier.amountBase());
@@ -82,15 +84,15 @@ public final class WaveGenerator {
                     List<String> traits = new ArrayList<>();
                     for (String t : mb.getStringList("traits")) traits.add(t.toLowerCase());
                     mobs.add(new MobSpec(mb.getString("type", "RAVAGER"), traits, true,
-                            mb.getDouble("hp-mult", 6.0), mb.getString("name")));
+                            mb.getDouble("hp-mult", 6.0), mb.getString("name"), mb.getStringList("skills")));
                 } else {
                     Pool p = pick(pool, n, r);
-                    mobs.add(new MobSpec(p.type(), p.traits(), true, 6.0, null));
+                    mobs.add(new MobSpec(p.type(), p.traits(), true, 6.0, null, p.skills()));
                 }
             }
             for (int i = 0; i < amount; i++) {
                 Pool p = pick(pool, n, r);
-                mobs.add(new MobSpec(p.type(), p.traits(), kind.equals("ELITE"), kind.equals("SWARM") ? 0.6 : 1.0, null));
+                mobs.add(new MobSpec(p.type(), p.traits(), kind.equals("ELITE"), kind.equals("SWARM") ? 0.6 : 1.0, null, p.skills()));
             }
             out.add(new Wave(n, kind, mobs));
         }

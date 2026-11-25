@@ -253,7 +253,13 @@ public final class BossController {
             }
             case "gravity_pull", "pull" -> pull(s.getDouble("radius", 14), dmg, warn, s.getDouble("strength", 1.3));
             case "blink", "teleport" -> blink(s.getDouble("radius", 5), dmg, warn, effect);
-            default -> plugin.getLogger().warning("Ky nang chua ho tro: " + name + " (type=" + type + ")");
+            default -> {
+                // cac loai ky nang dung chung voi quai thuong (leap, fireball, volley, heal, buff, self_buff...)
+                Player tgt = nearest(entity.getLocation(), online());
+                if (tgt != null && !plugin.mobSkills().cast(entity, type, s, tgt, tier.bossSkillDamageMult())) {
+                    plugin.getLogger().warning("Ky nang chua ho tro: " + name + " (type=" + type + ")");
+                }
+            }
         }
     }
 
