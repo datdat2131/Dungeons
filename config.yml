@@ -1,46 +1,512 @@
-dungeon:
-  join-window-seconds: 120   # thời gian đầu để vào (WAITING)
-  late-join-seconds: 180      # sau khi Dungeon bat dau, con ngan nay cho nguoi vao muon; het gio cong dong han
-  late-join: true            # cho vào muộn khi đang chạy
-  max-duration-minutes: 40   # quá giờ sẽ bị cưỡng chế kết thúc
-  block-edit: false          # người trong Dungeon được phá/đặt block?
-# lobby được lưu bằng /dungeon admin setlobby
-  keep-inventory: true       # chet trong Dungeon khong mat do
-  reward-delay-seconds: 30   # sau khi Boss chet, doi bao lau roi dong Dungeon
-mobs:
-  cap: 40                    # so quai toi da cung luc
-  spawn-radius: 14           # quai spawn quanh nguoi choi trong ban kinh nay
-  elite-chance: 0.05         # ty le quai Tinh Anh (x3 mau, diem cao hon)
-  hp-per-player: 0.1         # +10% mau quai moi nguoi them
-  first-wave-delay-seconds: 5   # nghi truoc dot 1
-  wave-delay-seconds: 10        # nghi giua cac dot (va truoc Boss)
-  wave-clear-points: 20         # diem dong gop khi clear 1 dot
-  heal-between-waves: true      # hoi day mau + thuc an sau moi dot
-database:
-  type: sqlite               # sqlite | mysql
-  mysql:
-    host: localhost
-    port: 3306
-    database: astrax
-    user: root
-    password: ""
-reward:
-  min-points: 30             # diem dong gop toi thieu de nhan thuong chinh
-  afk-seconds: 120           # khong danh quai/boss trong ngan nay => coi la AFK
-  money-command: ""          # dung khi khong co Vault, vd: eco give {player} {amount}
-  broadcast-min-rarity: LEGENDARY
-party:
-  max-size: 10
-  invite-seconds: 60
-revive:
-  enabled: true              # het mang nhung con dong doi song => guc cho cuu (thay vi bi loai ngay)
-  seconds: 5                 # so giay dong doi phai GIU SHIFT gan de cuu
-  timeout-seconds: 60        # qua thoi gian nay khong ai cuu => bi loai
-  lives-on-revive: 1         # so mang sau khi duoc cuu
-quests:
-  streak-bonus-per-day: 0.02 # chuoi ngay tham gia: +2% ty le roi moi ngay lien tiep
-  streak-max-bonus: 0.20     # toi da +20%
-discord:
-  webhook-url: ""            # dan link webhook Discord vao day de bat thong bao
-  notify-open: true          # bao khi Dungeon mo
-  notify-rare: true          # bao khi co nguoi nhan do hiem
+# ======================================================================
+#  NGUYÊN TỐ - FILE CẤU HÌNH
+#  Sửa xong gõ  /nguyento reload  trong game (không cần restart server).
+#  - Đặt một giá trị = 0 để tắt buff đó (dòng mô tả trong GUI cũng tự ẩn).
+#  - Mô tả hiển thị dưới mỗi nguyên tố trong GUI tự cập nhật theo file này.
+#  - Các số có chữ "percent" / "chance" tính theo %, ví dụ 20 = 20%.
+#  - "damage" = sát thương cộng thêm, "max-health" = máu tối đa (2 máu = 1 tim).
+# ======================================================================
+
+general:
+  skills-hit-players: true   # chiêu thức có ảnh hưởng người chơi khác không
+  skills-hit-mobs: true      # chiêu thức có ảnh hưởng quái/động vật không
+  show-skill-hud: true       # hiện trạng thái hồi chiêu trên thanh action bar
+  keep-equipped-on-rejoin: true   # true = thoát game / tắt server rồi vào lại vẫn giữ nguyên nguyên tố đã trang bị
+                                  # false = mỗi lần vào lại phải trang bị lại từ đầu
+  pvp-passive-damage-percent: 100 # % sát thương nội tại + chiêu thức khi mục tiêu là NGƯỜI CHƠI (100 = như đánh quái,
+                                  # 70 = giảm 30% để PvP đỡ lệch). Không ảnh hưởng đòn đánh thường
+
+# ----------------------------------------------------------------------
+#  Ô NGUYÊN TỐ THỨ 4 - mặc định chỉ có 3 ô. Ô thứ 4 mở bằng nhiệm vụ khó HOẶC admin cấp
+#  (admin: /nguyento slot give <người chơi>). Tiến độ lưu theo người chơi, không mất khi thoát game.
+# ----------------------------------------------------------------------
+extra-slot:
+  enabled: true                  # false = tắt hẳn ô thứ 4 (kể cả admin đã cấp)
+  broadcast: true                # thông báo cho cả server khi có người tự hoàn thành nhiệm vụ
+  quest:
+    enabled: true                # false = ô thứ 4 chỉ admin mới cấp được
+    require-equipped: true       # chỉ tính hạ gục khi đang trang bị ít nhất 1 nguyên tố
+    # Phải hoàn thành TẤT CẢ mục tiêu đang bật (đặt 0 để bỏ một mục tiêu):
+    kill-players: 100            # hạ 100 người chơi KHÁC NHAU (giết lại cùng một người không tính, tính mãi mãi)
+    kill-mobs: 5000              # tiêu diệt 5000 quái thù địch
+    dungeon-gates: 10            # hoàn thành 10 cổng dungeon từ rank dungeon-min-rank trở lên
+    dungeon-min-rank: legendary
+    dungeon-ranks:               # thứ tự rank từ thấp đến cao (đổi theo plugin dungeon của bạn)
+      - common
+      - uncommon
+      - rare
+      - epic
+      - legendary
+      - mythic
+    online-hours: 48             # online đủ 48 giờ (tính theo thống kê thời gian chơi của server)
+    # Cổng dungeon: plugin dungeon cần chạy lệnh console khi người chơi thắng cổng, ví dụ:
+    #   nguyento quest dungeon %player% legendary
+    # (rank thấp hơn dungeon-min-rank sẽ không được tính; bỏ rank thì luôn được tính)
+
+# ----------------------------------------------------------------------
+#  BỘ CỘNG HƯỞNG - trang bị đủ 2-3 nguyên tố trong một bộ thì nhận thêm buff
+#  Tự thêm bộ mới: tạo mục mới có elements: [id1, id2, id3] (id xem trong README) và các buff bên dưới.
+#  Buff hỗ trợ: damage, max-health, speed-percent, attack-speed-percent, armor-percent, damage-reduction-percent
+#  Bộ nào sai id hoặc không phải 2-3 nguyên tố sẽ bị bỏ qua. enabled: false = tắt toàn bộ.
+# ----------------------------------------------------------------------
+sets:
+  enabled: true
+  tam_nguyen:
+    name: "Tam Nguyên"
+    color: "§6"
+    elements: [anh_sang, bong_toi, rong]
+    damage: 3
+    max-health: 6
+    damage-reduction-percent: 5
+  bao_lua:
+    name: "Bão Lửa"
+    color: "§c"
+    elements: [lua, set, gio]
+    damage: 2
+    speed-percent: 5
+    attack-speed-percent: 5
+  bang_dia:
+    name: "Băng Địa"
+    color: "§b"
+    elements: [bang, dat, nuoc]
+    max-health: 4
+    armor-percent: 15
+  long_hoa_loi:
+    name: "Long Hỏa Lôi"
+    color: "§4"
+    elements: [rong, lua, set]
+    damage: 3
+    attack-speed-percent: 8
+  thuy_hoa:
+    name: "Thủy Hỏa Giao Hòa"
+    color: "§d"
+    elements: [lua, nuoc]
+    max-health: 4
+    damage-reduction-percent: 3
+  long_than:
+    name: "Long Thần Song Hợp"
+    color: "§e"
+    elements: [thanh_long, hac_long]
+    damage: 4
+    max-health: 8
+    damage-reduction-percent: 5
+
+# ----------------------------------------------------------------------
+#  KHỐI NGUYÊN TỐ TỰ CHIẾN ĐẤU (các khối trên vòng bay sau lưng)
+#  - Tự tấn công: lao ra đánh kẻ địch đang giao chiến với bạn (hoặc quái đang nhắm vào bạn) rồi bay về vòng.
+#  - Hộ vệ: lao ra chặn một đòn đánh vào bạn (giảm sát thương), vỡ ra rồi mọc lại sau vài giây.
+#  Mỗi nguyên tố có thể có sát thương riêng bằng dòng orb-damage trong mục elements.<id> (không đặt thì dùng damage bên dưới).
+# ----------------------------------------------------------------------
+orb:
+  attack: true                   # tự tấn công
+  guard: true                    # hộ vệ
+  damage: 4                      # sát thương mỗi lần khối lao trúng (đã nhân buff / tương khắc / giảm PvP)
+  attack-interval-seconds: 3     # mỗi khối lao ra đánh một lần sau bấy nhiêu giây
+  range: 10                      # tầm tìm mục tiêu (tối đa 11 block)
+  combat-seconds: 8              # kẻ địch bạn vừa đánh / vừa đánh bạn được coi là đang giao chiến bấy nhiêu giây
+  guard-reduction-percent: 35    # % sát thương bị khối chặn mất
+  guard-interval-seconds: 1.5    # tối thiểu giữa hai lần chặn
+  respawn-seconds: 6             # khối vỡ sau khi chặn, bấy nhiêu giây sau mọc lại
+
+# ----------------------------------------------------------------------
+#  GIÁC NGỘ - giữ Shift rồi bấm phím F (đổi tay) hoặc /nguyento awaken
+#  Trong thời gian giác ngộ: vòng nguyên tố nở to + quay nhanh, các khối tấn công nhanh hơn, được cộng buff.
+# ----------------------------------------------------------------------
+awaken:
+  enabled: true
+  sneak-swap: true               # true = Shift + F kích hoạt (false = chỉ dùng lệnh)
+  seconds: 15                    # thời gian giác ngộ
+  cooldown: 180                  # hồi chiêu (tính từ lúc kích hoạt)
+  damage-percent: 30             # +% sát thương gây ra
+  reduction-percent: 10          # +% giảm sát thương nhận vào
+  speed-percent: 15              # +% tốc độ di chuyển
+  attack-interval-multiplier: 0.5   # khối tự tấn công nhanh gấp đôi (0.5 = nửa thời gian chờ)
+  ring-radius-multiplier: 1.35   # vòng nở to bấy nhiêu lần
+  ring-speed-multiplier: 2.0     # vòng quay nhanh bấy nhiêu lần
+
+# ----------------------------------------------------------------------
+#  VÒNG TƯƠNG KHẮC - nguyên tố khắc nhau thì tăng / giảm sát thương
+#  pairs: "A: [B, C]" nghĩa là A khắc B và C. Hợp thể tính theo hai nguyên tố gốc của nó.
+#  Mục tiêu là người chơi: dùng nguyên tố đang mang. Mục tiêu là quái: dùng bảng mobs bên dưới (loại quái VIẾT HOA).
+#  Khắc được mục tiêu: +bonus-percent sát thương. Bị mục tiêu khắc ngược: -penalty-percent sát thương.
+#  Áp dụng cho đòn đánh thường, nội tại và chiêu thức. enabled: false = tắt hoàn toàn.
+# ----------------------------------------------------------------------
+counter:
+  enabled: true
+  bonus-percent: 20
+  penalty-percent: 20
+  pairs:
+    nuoc: [lua]
+    lua: [bang]
+    bang: [gio]
+    gio: [dat]
+    dat: [set]
+    set: [nuoc]
+    anh_sang: [bong_toi]
+    bong_toi: [rong]
+    rong: [anh_sang]
+  mobs:
+    BLAZE: lua
+    MAGMA_CUBE: lua
+    STRIDER: lua
+    GHAST: lua
+    GUARDIAN: nuoc
+    ELDER_GUARDIAN: nuoc
+    DROWNED: nuoc
+    STRAY: bang
+    POLAR_BEAR: bang
+    SNOW_GOLEM: bang
+    VEX: gio
+    CREEPER: set
+    SHULKER: dat
+    IRON_GOLEM: dat
+    ENDERMAN: bong_toi
+    PHANTOM: bong_toi
+    WITHER: bong_toi
+    WITHER_SKELETON: bong_toi
+    ENDER_DRAGON: rong
+
+# ----------------------------------------------------------------------
+#  CUỘN TÁCH HỢP THỂ - trả một hợp thể về 2 nguyên tố gốc
+#  Admin đưa: /nguyento give <người chơi> unfuse [số lượng]. Chuột phải cuộn để mở menu tách.
+# ----------------------------------------------------------------------
+unfuse:
+  enabled: true
+  cost-levels: 0               # số cấp độ tốn thêm mỗi lần tách (ngoài việc tiêu hao 1 cuộn)
+
+# ----------------------------------------------------------------------
+#  THANH NĂNG LƯỢNG (tùy chọn) - thay hồi chiêu cố định của Bóng Tối / Ánh Sáng / Rồng
+#  Bật lên thì 3 chiêu cuối KHÔNG còn dùng hồi chiêu 90 giây nữa mà dùng thanh năng lượng (Boss Bar).
+#  Hồi chiêu của lá chắn Ánh Sáng (nội tại ẩn) và khiên hợp thể không bị ảnh hưởng.
+# ----------------------------------------------------------------------
+energy:
+  enabled: false               # true = dùng thanh năng lượng, false = giữ hồi chiêu cố định như cũ
+  max: 100
+  cost: 100                    # năng lượng tiêu hao mỗi lần dùng chiêu (100 = phải đầy thanh)
+  per-hit: 5                   # + năng lượng mỗi đòn đánh trúng
+  on-damaged: 3                # + năng lượng mỗi lần bị đánh
+  regen-per-second: 0.5        # + năng lượng mỗi giây
+  bar: true                    # hiện thanh Boss Bar
+
+# ----------------------------------------------------------------------
+#  KIỂU NGUYÊN TỐ BAY QUANH NGƯỜI
+# ----------------------------------------------------------------------
+orbit:
+  style: ring            # ring = nối đuôi nhau bay thành vòng tròn quay sau lưng (kiểu Cầu Lục Đạo)
+                         # back = xếp hình cánh quạt sau lưng | classic = kiểu cũ (trên đầu + hai bên vai)
+  ring-radius: 1.15      # bán kính vòng tròn (kiểu ring)
+  ring-speed: 1.3        # tốc độ quay (radian mỗi giây, âm = quay ngược)
+  ring-distance: 0.8     # khoảng cách vòng tròn ra phía sau lưng (kiểu ring)
+  back-distance: 0.95    # khoảng cách phía sau lưng (block)
+  spread-degrees: 50     # độ xòe của hình quạt (0 = dồn hết ra sau lưng, 90 = dàn ngang hai bên)
+  height: 1.0            # hệ số độ cao (1.0 = ngang vai - đầu, nhỏ hơn = thấp xuống)
+  size: 1.0              # hệ số kích thước chung của mọi nguyên tố bay (từng nguyên tố còn có elements.<id>.orbit-scale)
+  ring: true             # vòng hạt phát sáng đi theo quỹ đạo các nguyên tố (tắt nếu muốn nhẹ hơn)
+
+# ----------------------------------------------------------------------
+#  HIỆU NĂNG - chỉnh ở đây nếu bị giật / lag
+# ----------------------------------------------------------------------
+performance:
+  orbit-update-ticks: 2        # nguyên tố cập nhật vị trí mỗi N tick (1-10). Server yếu/đông người: đặt 3-4
+  particles: true              # false = tắt toàn bộ hạt hiệu ứng (nguyên tố bay + chiêu thức)
+  particle-density: 0.6        # mật độ hạt 0.0 - 1.0 (thấp = nhẹ hơn)
+  view-range-blocks: 32        # khoảng cách tối đa còn nhìn thấy nguyên tố (block)
+  skill-item-check-seconds: 2  # bao lâu kiểm tra lại vật phẩm kỹ năng
+
+# ----------------------------------------------------------------------
+#  HỢP THỂ (FUSION) - kết hợp 2 nguyên tố thành 1
+#  Mở bằng /nguyento (nút Đe) hoặc /nguyento fusion. Click hợp thể 2 lần để xác nhận.
+#  Khi kết hợp, người chơi MẤT hai nguyên tố gốc và nhận hợp thể.
+#  Hợp thể là nguyên tố độc lập (chỉ chiếm 1 ô), chỉ nhận buff + nội tại riêng ở mục elements bên dưới.
+# ----------------------------------------------------------------------
+fusion:
+  cost-levels: 0               # số cấp độ (level kinh nghiệm) tốn mỗi lần kết hợp. 0 = miễn phí
+  passive-chance-percent: 100  # hệ số chung nhân vào xác suất kích hoạt nội tại CHÍNH của mọi hợp thể (100 = giữ nguyên,
+                               # 50 = giảm một nửa, 200 = gấp đôi, tối đa mỗi nội tại vẫn là 100%). Xác suất riêng từng hợp thể
+                               # chỉnh ở mục elements.<id> (steam-chance, sand-chance, bolt-chance, strike-chance, soul-chance...)
+
+elements:
+
+  # ---------------- LỬA ----------------
+  # Buff: kháng lửa (cố định), +damage, +máu | Nội tại: gây cháy
+  lua:
+    orbit-scale: 1.0               # kích thước nguyên tố bay quanh người (1.0 = mặc định, nhỏ hơn = bé lại)
+    damage: 1
+    max-health: 2
+    ignite-chance: 20        # % gây cháy khi tấn công
+    ignite-seconds: 2        # cháy bao nhiêu giây
+
+  # ---------------- BĂNG ----------------
+  # (Bạn ghi "+0,5 speed" -> mình hiểu là +5% tốc độ. Sửa lại nếu muốn.)
+  bang:
+    orbit-scale: 1.0               # kích thước nguyên tố bay quanh người (1.0 = mặc định, nhỏ hơn = bé lại)
+    speed-percent: 5
+    max-health: 2
+    slow-chance: 15          # % làm chậm mục tiêu khi tấn công
+    slow-seconds: 2
+    slow-amplifier: 1        # 0 = Chậm I, 1 = Chậm II, ...
+
+  # ---------------- NƯỚC ----------------
+  nuoc:
+    orbit-scale: 1.0               # kích thước nguyên tố bay quanh người (1.0 = mặc định, nhỏ hơn = bé lại)
+    heal-bonus-percent: 20   # +% lượng máu hồi nhận được
+    max-health: 3
+    heal-on-hit-chance: 10   # % hồi máu khi tấn công
+    heal-on-hit-amount: 2    # lượng máu hồi (2 = 1 tim)
+
+  # ---------------- ĐẤT ----------------
+  dat:
+    orbit-scale: 1.0               # kích thước nguyên tố bay quanh người (1.0 = mặc định, nhỏ hơn = bé lại)
+    armor-percent: 20        # +% giáp (nhân với tổng giáp đang có)
+    max-health: 4
+
+  # ---------------- GIÓ ----------------
+  gio:
+    orbit-scale: 1.0               # kích thước nguyên tố bay quanh người (1.0 = mặc định, nhỏ hơn = bé lại)
+    speed-percent: 15
+    attack-speed-percent: 10
+    dodge-chance: 10         # % né đòn
+
+  # ---------------- SÉT ----------------
+  set:
+    orbit-scale: 1.0               # kích thước nguyên tố bay quanh người (1.0 = mặc định, nhỏ hơn = bé lại)
+    damage: 2
+    attack-speed-percent: 5
+    lightning-chance: 10     # % phóng điện khi tấn công
+    lightning-damage: 4      # sát thương mỗi lần phóng điện
+    lightning-radius: 3      # bán kính lan điện (block)
+
+  # ---------------- BÓNG TỐI (HUYỀN THOẠI) ----------------
+  bong_toi:
+    orbit-scale: 1.0               # kích thước nguyên tố bay quanh người (1.0 = mặc định, nhỏ hơn = bé lại)
+    damage: 3
+    lifesteal-percent: 10    # % sát thương gây ra hồi lại thành máu
+    dark-chance: 15          # % đòn đánh có thêm sát thương bóng tối
+    dark-bonus-percent: 30   # +% sát thương khi nội tại kích hoạt
+    # Chiêu: trang bị ở ô nào cũng được, nhận vật phẩm kỹ năng và chuột phải để dùng
+    skill:
+      cooldown: 90           # hồi chiêu (giây)
+      duration: 10           # thời gian lãnh địa (giây)
+      radius: 7              # bán kính lãnh địa (block)
+      height: 12             # chiều cao lãnh địa (block): kẻ địch bị khóa chân không thể chạy ra ngoài hay bay lên quá mức này
+      owner-speed-amplifier: 1        # tăng tốc cho bản thân (0 = Speed I, 1 = Speed II)
+      owner-bonus-damage: 1.5         # +sát thương trong lãnh địa
+      owner-extra-lifesteal-percent: 15   # +% hút máu trong lãnh địa
+      enemy-slow-amplifier: 1         # kẻ địch bị chậm (0 = Chậm I, 1 = Chậm II)
+      enemy-nausea: 1                 # 1 = gây buồn nôn, 0 = tắt
+      enemy-darkness: 1               # 1 = người chơi bị khóa chân bị tối mắt (hiệu ứng Darkness), 0 = tắt
+
+  # ---------------- ÁNH SÁNG (HUYỀN THOẠI) ----------------
+  # (Bạn ghi "+15% sát thương nhận vào" -> mình hiểu là GIẢM 15% sát thương nhận vào.
+  #  Muốn tăng sát thương nhận thì điền số âm, ví dụ -15.)
+  anh_sang:
+    orbit-scale: 1.0               # kích thước nguyên tố bay quanh người (1.0 = mặc định, nhỏ hơn = bé lại)
+    damage: 2
+    damage-reduction-percent: 15
+    # Nội tại ẩn: lá chắn máu vàng khi máu thấp
+    shield:
+      health-threshold-percent: 20   # kích hoạt khi máu dưới % này
+      shield-percent: 30             # lá chắn = % máu tối đa
+      cooldown: 30                   # hồi (giây)
+      duration-seconds: 15           # lá chắn tồn tại tối đa (giây)
+    # Chiêu cuối Thần Phạt: trang bị ở ô nào cũng được, nhận vật phẩm kỹ năng và chuột phải để dùng
+    skill:
+      cooldown: 90
+      pillars: 3                     # số cột ánh sáng (ưu tiên giáng xuống kẻ địch gần nhất, thiếu thì xếp phía trước)
+      damage: 35                     # sát thương MỖI cột
+      radius: 3                      # bán kính mỗi cột (block)
+      range: 28                      # tầm tìm kẻ địch (block)
+      cast-delay-ticks: 30           # thời gian báo trước (20 tick = 1 giây)
+      stagger-ticks: 6               # các cột giáng xuống lệch nhau bấy nhiêu tick (cho đẹp)
+
+  # ---------------- RỒNG (HUYỀN THOẠI) ----------------
+  rong:
+    damage: 2
+    max-health: 4
+    armor-percent: 10
+    orbit-scale: 0.6               # kích thước đầu rồng bay quanh người (1.0 = to như gốc). Mọi nguyên tố đều có thể thêm dòng này
+    # Chiêu Hơi Thở Rồng: trang bị ở ô nào cũng được, nhận vật phẩm kỹ năng và chuột phải để dùng
+    skill:
+      cooldown: 90
+      duration: 10                   # thời gian vùng hơi thở (giây)
+      radius: 20                     # bán kính vùng hơi thở quanh vị trí tung chiêu (block)
+      damage-per-second: 10          # sát thương mỗi giây cho mọi kẻ địch trong vùng
+      heads: 5                       # số đầu rồng bay vòng quanh vùng (1-8, chỉ là hiệu ứng hình ảnh)
+      head-scale: 1.0                # kích thước các đầu rồng khổng lồ trong chiêu (1.0 = mặc định, 0.5 = nhỏ một nửa)
+
+  # ======================= HỢP THỂ =======================
+  # Mỗi hợp thể là nguyên tố độc lập: chỉ có buff và nội tại ghi dưới đây.
+  # guard = khiên tự kích hoạt khi máu xuống dưới ngưỡng (health-threshold-percent), hồi chiêu = cooldown (giây).
+
+  # ---------------- FIRE WATER = LỬA + NƯỚC ----------------
+  fire_water:
+    orbit-scale: 1.0               # kích thước nguyên tố bay quanh người (1.0 = mặc định, nhỏ hơn = bé lại)
+    damage: 2
+    max-health: 4
+    attack-speed-percent: 5
+    steam-chance: 15               # % tạo vụ nổ hơi nước khi tấn công
+    steam-damage: 5                # sát thương phép của vụ nổ
+    steam-radius: 3
+    steam-slow-seconds: 2          # Giảm Tốc I
+    steam-burn-bonus-percent: 30   # mục tiêu đang Thiêu Đốt: vụ nổ +30% sát thương
+    steam-stun-chance: 10          # mục tiêu đang Ướt: % bị Choáng
+    steam-stun-seconds: 0.5
+    steam-wet-seconds: 6           # kẻ địch dính hơi nước bị đánh dấu Ướt trong bấy nhiêu giây
+    guard:
+      health-threshold-percent: 20 # máu dưới 20% -> màn sương
+      reduction-percent: 20
+      seconds: 3
+      cooldown: 60
+
+  # ---------------- BÃO CÁT = ĐẤT + GIÓ ----------------
+  bao_cat:
+    orbit-scale: 1.0               # kích thước nguyên tố bay quanh người (1.0 = mặc định, nhỏ hơn = bé lại)
+    armor-percent: 30
+    max-health: 6
+    attack-speed-percent: 10
+    speed-percent: 20
+    sand-chance: 15                # % tạo cơn bão cát nhỏ quanh mục tiêu
+    sand-damage: 4
+    sand-radius: 4
+    sand-slow-percent: 30          # Giảm tốc (Slowness mỗi cấp = 15%, tự làm tròn)
+    sand-slow-seconds: 2
+    sand-knockup-chance: 10        # % hất tung nhẹ mỗi kẻ địch trúng
+    sand-multi-count: 3            # trúng từ bấy nhiêu mục tiêu trở lên ...
+    sand-speed-bonus-percent: 15   # ... nhận +15% tốc độ di chuyển ...
+    sand-speed-seconds: 3          # ... trong 3 giây
+    guard:
+      health-threshold-percent: 30 # máu dưới 30% -> Khiên Cát
+      reduction-percent: 20
+      seconds: 3
+      cooldown: 45
+
+  # ---------------- HÀN LÔI = SÉT + BĂNG ----------------
+  han_loi:
+    orbit-scale: 1.0               # kích thước nguyên tố bay quanh người (1.0 = mặc định, nhỏ hơn = bé lại)
+    damage: 3
+    max-health: 4
+    attack-speed-percent: 5
+    speed-percent: 5
+    bolt-chance: 15                # % triệu hồi tia sét băng
+    bolt-damage: 5                 # sát thương sét
+    frost-damage: 3                # sát thương băng (cộng với sát thương sét)
+    slow-percent: 35               # Chậm 35% (Slowness mỗi cấp = 15% nên áp dụng gần nhất: Chậm II = 30%)
+    slow-seconds: 2
+    freeze-chance: 25              # nếu mục tiêu đang bị Chậm: % Đóng Băng
+    freeze-seconds: 0.8
+    shatter-bonus-percent: 40      # đánh mục tiêu đang Đóng Băng: phá băng, +40% sát thương
+    guard:
+      health-threshold-percent: 25 # máu dưới 25% -> Lôi Băng Hộ Thể
+      reduction-percent: 20
+      seconds: 4
+      cooldown: 30
+
+  # ---------------- LÔI VIÊM = LỬA + SÉT ----------------
+  loi_viem:
+    orbit-scale: 1.0               # kích thước nguyên tố bay quanh người (1.0 = mặc định, nhỏ hơn = bé lại)
+    damage: 4
+    max-health: 4
+    speed-percent: 10
+    strike-chance: 15              # % tạo Lôi Viêm lên mục tiêu (Thiên Hỏa Lôi Bạo)
+    fire-damage: 3                 # sát thương lửa
+    lightning-damage: 4            # sát thương sét
+    burn-seconds: 3                # Thiêu Đốt
+    static-seconds: 2              # Nhiễm Điện
+    burst-bonus-percent: 50        # mục tiêu có cả 2 hiệu ứng: Bộc Phát +50% sát thương
+    burst-targets: 3               # vụ nổ lan sang tối đa bấy nhiêu kẻ địch ...
+    burst-radius: 4                # ... trong bán kính này (block)
+    burst-spread-percent: 100      # sát thương lan = % sát thương Bộc Phát
+    burst-cooldown: 5              # hồi chiêu của Bộc Phát (giây)
+
+  # ---------------- BĂNG THỦY = NƯỚC + BĂNG ----------------
+  bang_thuy:
+    orbit-scale: 1.0               # kích thước nguyên tố bay quanh người (1.0 = mặc định, nhỏ hơn = bé lại)
+    damage: 2
+    max-health: 5
+    speed-percent: 8
+    freeze-chance: 12              # % đóng băng mục tiêu
+    freeze-seconds: 2
+    freeze-amplifier: 4            # 4 = Chậm V (gần như đứng yên)
+    freeze-damage: 3
+
+  # ---------------- THÁNH LONG = ÁNH SÁNG + RỒNG ----------------
+  thanh_long:
+    orbit-scale: 1.0               # kích thước nguyên tố bay quanh người (1.0 = mặc định, nhỏ hơn = bé lại)
+    damage: 4
+    max-health: 6
+    armor-percent: 20
+    damage-reduction-percent: 10   # giảm 10% sát thương nhận vào (luôn có)
+    soul-chance: 15                # % triệu hồi Long Hồn Ánh Sáng (Thánh Long Giáng Thế)
+    soul-damage: 8                 # sát thương Ánh Sáng + Rồng
+    mark-seconds: 5                # Thánh Ấn
+    holy-bonus-percent: 35         # đánh mục tiêu có Thánh Ấn: +35% sát thương
+    holy-consume-mark: 0           # 1 = Thánh Ấn biến mất sau khi bị đánh trúng
+    guard:
+      health-threshold-percent: 30 # máu dưới 30% -> Long Hộ
+      reduction-percent: 25
+      speed-percent: 15
+      seconds: 5
+      cooldown: 45
+
+  # ---------------- HẮC LONG = BÓNG TỐI + RỒNG ----------------
+  hac_long:
+    orbit-scale: 1.0               # kích thước nguyên tố bay quanh người (1.0 = mặc định, nhỏ hơn = bé lại)
+    damage: 4
+    max-health: 6
+    lifesteal-percent: 20          # hút máu 20% sát thương gây ra
+    soul-chance: 15                # % triệu hồi Hắc Long Hồn (Hắc Long Thôn Phệ)
+    soul-damage: 8                 # sát thương Rồng + Bóng Tối
+    mark-seconds: 5                # Hắc Ấn
+    devour-bonus-percent: 40       # đánh mục tiêu có Hắc Ấn: Thôn Phệ +40% sát thương ...
+    devour-heal-percent: 5         # ... và hồi 5% máu tối đa
+    devour-consume-mark: 0         # 1 = Hắc Ấn biến mất sau khi bị Thôn Phệ
+    guard:
+      health-threshold-percent: 25 # máu dưới 25% -> Hắc Long Hộ Thể
+      reduction-percent: 30
+      damage-percent: 20           # +20% sát thương gây ra
+      seconds: 5
+      cooldown: 45
+
+  # ---------------- DUNG NHAM = LỬA + ĐẤT ----------------
+  dung_nham:
+    orbit-scale: 1.0               # kích thước nguyên tố bay quanh người (1.0 = mặc định, nhỏ hơn = bé lại)
+    damage: 3
+    max-health: 5
+    armor-percent: 15
+    magma-chance: 12
+    magma-damage: 5
+    magma-radius: 3
+    magma-ignite-seconds: 4
+
+  # ---------------- BÃO TỐ = GIÓ + SÉT ----------------
+  bao_to:
+    orbit-scale: 1.0               # kích thước nguyên tố bay quanh người (1.0 = mặc định, nhỏ hơn = bé lại)
+    damage: 3
+    max-health: 4
+    speed-percent: 8
+    attack-speed-percent: 8
+    storm-chance: 14               # Cơn Bão Sét (hất tung kẻ địch)
+    storm-damage: 4
+    storm-radius: 3
+
+  # ---------------- BÃO TUYẾT = GIÓ + BĂNG ----------------
+  bao_tuyet:
+    orbit-scale: 1.0               # kích thước nguyên tố bay quanh người (1.0 = mặc định, nhỏ hơn = bé lại)
+    damage: 3
+    max-health: 4
+    speed-percent: 8
+    blizzard-chance: 12
+    blizzard-damage: 3
+    blizzard-radius: 4
+    blizzard-seconds: 3
+    blizzard-amplifier: 2          # 2 = Chậm III
+
+  # ---------------- VIÊM LONG = LỬA + RỒNG ----------------
+  viem_long:
+    orbit-scale: 1.0               # kích thước nguyên tố bay quanh người (1.0 = mặc định, nhỏ hơn = bé lại)
+    damage: 4
+    max-health: 5
+    inferno-chance: 12
+    inferno-damage: 7
+    inferno-radius: 4
+    inferno-ignite-seconds: 5

@@ -1,258 +1,357 @@
-package com.astrax.dungeon.quest;
+package vn.nguyento;
 
-import com.astrax.dungeon.AstraXDungeon;
-import com.astrax.dungeon.database.Database;
-import com.astrax.dungeon.reward.LootTable;
 import org.bukkit.Bukkit;
-import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.Color;
+import org.bukkit.Location;
+import org.bukkit.NamespacedKey;
+import org.bukkit.Sound;
+import org.bukkit.Statistic;
+import org.bukkit.entity.Enemy;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitTask;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.persistence.PersistentDataType;
 
-import java.io.File;
-import java.time.LocalDate;
-import java.time.temporal.IsoFields;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
 /**
- * Nhiem vu ngay/tuan (chon ngau nhien nhung giong nhau cho moi nguoi trong cung ngay/tuan) va chuoi ngay tham gia.
- * Tien do nam trong bo nho, ghi DB bat dong bo moi 30 giay va khi thoat game.
- * Loai nhiem vu: KILL_MOBS KILL_ELITES BOSS_DAMAGE CLEAR_DUNGEON CLEAR_TIER(param) WAVES JOIN_DUNGEON REVIVE NO_DEATH_CLEAR.
+ * Nhiệm vụ khó để mở khóa ô nguyên tố thứ 4 (hoặc admin cấp). Cần hoàn thành TẤT CẢ mục tiêu đang bật:
+ * hạ N người chơi KHÁC NHAU, hạ N quái, hoàn thành N cổng dungeon từ một rank trở lên, online đủ N giờ.
+ * Mọi con số chỉnh trong config.yml (extra-slot.quest). Tiến độ lưu theo người chơi, không mất khi thoát game.
  */
-public final class QuestManager {
-    public record Quest(String id, String name, String scope, String type, String param, int amount,
-                        double money, List<LootTable.Drop> items) {}
+public class QuestManager implements Listener {
 
-    private record Dirty(String key, int progress, int claimed) {}
+    private static final int DEF_PLAYERS = 100;
+    private static final int DEF_MOBS = 5000;
+    private static final int DEF_DUNGEON = 10;
+    private static final int DEF_ONLINE = 48;
 
-    private static final class Streak {
-        String lastDay = "";
-        int streak;
-        int best;
-    }
+    /** Một mục tiêu của nhiệm vụ. */
+    public static final class Objective {
+        public final String key;
+        public final String label;
+        public final int target;
 
-    private final AstraXDungeon plugin;
-    private final List<Quest> daily = new ArrayList<>();
-    private final List<Quest> weekly = new ArrayList<>();
-    private int dailyCount = 3;
-    private int weeklyCount = 3;
-    private final Map<String, List<Quest>> activeCache = new HashMap<>();
-    private final Map<UUID, Map<String, int[]>> data = new ConcurrentHashMap<>();  // {tien do, da nhan, dirty}
-    private final Map<UUID, Streak> streaks = new ConcurrentHashMap<>();
-    private BukkitTask flushTask;
-
-    public QuestManager(AstraXDungeon plugin) { this.plugin = plugin; }
-
-    // ---------- cau hinh ----------
-    public void load() {
-        daily.clear();
-        weekly.clear();
-        activeCache.clear();
-        YamlConfiguration y = YamlConfiguration.loadConfiguration(new File(plugin.getDataFolder(), "quests.yml"));
-        dailyCount = y.getInt("daily-count", 3);
-        weeklyCount = y.getInt("weekly-count", 3);
-        parse(y.getMapList("daily"), "DAILY", daily);
-        parse(y.getMapList("weekly"), "WEEKLY", weekly);
-    }
-
-    private void parse(List<Map<?, ?>> list, String scope, List<Quest> out) {
-        for (Map<?, ?> m : list) {
-            if (m.get("id") == null) continue;
-            String id = String.valueOf(m.get("id"));
-            double money = 0;
-            List<LootTable.Drop> items = new ArrayList<>();
-            if (m.get("reward") instanceof Map<?, ?> rw) {
-                if (rw.get("money") instanceof Number n) money = n.doubleValue();
-                if (rw.get("items") instanceof List<?> l) {
-                    for (Object o : l) if (o instanceof Map<?, ?> im) items.add(LootTable.parseDrop(im));
-                }
-            }
-            out.add(new Quest(id, m.get("name") == null ? id : String.valueOf(m.get("name")), scope,
-                    m.get("type") == null ? "KILL_MOBS" : String.valueOf(m.get("type")).toUpperCase(),
-                    m.get("param") == null ? "" : String.valueOf(m.get("param")),
-                    m.get("amount") instanceof Number a ? a.intValue() : 1, money, items));
+        Objective(String key, String label, int target) {
+            this.key = key;
+            this.label = label;
+            this.target = target;
         }
     }
 
+    private final NguyenToPlugin plugin;
+    private final ElementManager manager;
+    private final Settings settings;
+    private final NamespacedKey questKey;
+    private final NamespacedKey victimsKey;
+
+    public QuestManager(NguyenToPlugin plugin, ElementManager manager, Settings settings) {
+        this.plugin = plugin;
+        this.manager = manager;
+        this.settings = settings;
+        this.questKey = new NamespacedKey(plugin, "quest");
+        this.victimsKey = new NamespacedKey(plugin, "quest_victims");
+    }
+
+    /** Bắt đầu vòng kiểm tra mỗi phút (thời gian online không có sự kiện riêng). */
     public void start() {
-        load();
-        flushTask = Bukkit.getScheduler().runTaskTimer(plugin, this::flushAll, 20L * 30, 20L * 30);
+        Bukkit.getScheduler().runTaskTimer(plugin, () -> {
+            for (Player p : Bukkit.getOnlinePlayers()) {
+                // đếm phút online của chính plugin (dự phòng khi server không có thống kê thời gian chơi)
+                Map<String, Integer> m = read(p);
+                m.put("playmin", m.getOrDefault("playmin", 0) + 1);
+                write(p, m);
+                if (active(p)) checkOnline(p);
+            }
+        }, 1200L, 1200L);
     }
 
-    public void stop() {
-        if (flushTask != null) { flushTask.cancel(); flushTask = null; }
-        flushAll();
+    // ------------------------------------------------------------------
+    //  Cấu hình
+    // ------------------------------------------------------------------
+
+    private int cfgInt(String path, int def) {
+        return settings.cfg().getInt("extra-slot.quest." + path, def);
     }
 
-    // ---------- nhiem vu dang hoat dong ----------
-    public String periodKey(String scope) {
-        LocalDate d = LocalDate.now();
-        if (scope.equals("DAILY")) return d.toString();
-        return d.get(IsoFields.WEEK_BASED_YEAR) + "-W" + String.format("%02d", d.get(IsoFields.WEEK_OF_WEEK_BASED_YEAR));
+    private String minRank() {
+        return settings.cfg().getString("extra-slot.quest.dungeon-min-rank", "legendary");
     }
 
-    public List<Quest> active(String scope) {
-        String key = scope + ":" + periodKey(scope);
-        List<Quest> cached = activeCache.get(key);
-        if (cached == null) {
-            List<Quest> pool = new ArrayList<>(scope.equals("DAILY") ? daily : weekly);
-            Collections.shuffle(pool, new Random(key.hashCode()));
-            int n = Math.min(scope.equals("DAILY") ? dailyCount : weeklyCount, pool.size());
-            cached = new ArrayList<>(pool.subList(0, n));
-            activeCache.put(key, cached);
+    private List<String> rankOrder() {
+        List<String> l = settings.cfg().getStringList("extra-slot.quest.dungeon-ranks");
+        if (l.isEmpty()) {
+            l = java.util.Arrays.asList("common", "uncommon", "rare", "epic", "legendary", "mythic");
         }
-        return cached;
+        return l;
     }
 
-    private String key(Quest q) { return q.id() + "|" + periodKey(q.scope()); }
-
-    /** {tien do, da nhan} - ban sao de hien thi. */
-    public int[] state(UUID id, Quest q) {
-        Map<String, int[]> map = data.get(id);
-        int[] e = map == null ? null : map.get(key(q));
-        return e == null ? new int[]{0, 0} : new int[]{e[0], e[1]};
-    }
-
-    // ---------- tien do ----------
-    public void progress(UUID id, String type, String param, int amount) {
-        if (amount <= 0) return;
-        for (String scope : new String[]{"DAILY", "WEEKLY"}) {
-            for (Quest q : active(scope)) {
-                if (!q.type().equals(type)) continue;
-                if (!q.param().isEmpty() && !q.param().equalsIgnoreCase(param)) continue;
-                int[] e = data.computeIfAbsent(id, k -> new ConcurrentHashMap<>()).computeIfAbsent(key(q), k -> new int[3]);
-                if (e[1] == 1 || e[0] >= q.amount()) continue;
-                e[0] = Math.min(q.amount(), e[0] + amount);
-                e[2] = 1;
-                if (e[0] >= q.amount()) {
-                    Player p = Bukkit.getPlayer(id);
-                    if (p != null) p.sendMessage(plugin.messages().get("quest-complete", "name", q.name()));
-                }
+    /** Vị trí của rank trong danh sách (khớp chính xác, hoặc viết tắt từ 3 chữ như "leg" = legendary). -1 nếu không có. */
+    private int rankIndex(String rank) {
+        if (rank == null) return -1;
+        String r = rank.toLowerCase(Locale.ROOT).trim();
+        List<String> order = rankOrder();
+        for (int i = 0; i < order.size(); i++) {
+            if (order.get(i).toLowerCase(Locale.ROOT).equals(r)) return i;
+        }
+        if (r.length() >= 3) {
+            for (int i = 0; i < order.size(); i++) {
+                if (order.get(i).toLowerCase(Locale.ROOT).startsWith(r)) return i;
             }
         }
+        return -1;
     }
 
-    public void claim(Player p, Quest q) {
-        var m = plugin.messages();
-        Map<String, int[]> map = data.computeIfAbsent(p.getUniqueId(), k -> new ConcurrentHashMap<>());
-        int[] e = map.computeIfAbsent(key(q), k -> new int[3]);
-        if (e[1] == 1) { p.sendMessage(m.get("quest-already")); return; }
-        if (e[0] < q.amount()) { p.sendMessage(m.get("quest-incomplete")); return; }
-        e[1] = 1;
-        e[2] = 1;
-        if (q.money() > 0) {
-            plugin.distributor().giveMoney(p, q.money());
-            p.sendMessage(m.plain("reward-money", "money", (long) q.money()));
+    private static String capitalize(String s) {
+        if (s == null || s.isEmpty()) return s;
+        return s.substring(0, 1).toUpperCase(Locale.ROOT) + s.substring(1);
+    }
+
+    public List<Objective> objectives() {
+        List<Objective> out = new ArrayList<>();
+        int players = cfgInt("kill-players", DEF_PLAYERS);
+        if (players > 0) out.add(new Objective("players", "Hạ người chơi khác nhau", players));
+        int mobs = cfgInt("kill-mobs", DEF_MOBS);
+        if (mobs > 0) out.add(new Objective("mobs", "Tiêu diệt quái vật", mobs));
+        int dungeon = cfgInt("dungeon-gates", DEF_DUNGEON);
+        if (dungeon > 0) {
+            out.add(new Objective("dungeon", "Hoàn thành cổng dungeon " + capitalize(minRank()) + " trở lên", dungeon));
         }
-        for (LootTable.Drop d : q.items()) {
-            plugin.distributor().give(p, d, d.amount());
-            p.sendMessage(m.plain("reward-item", "item", d.rarity().color() + d.name(), "amount", d.amount()));
-        }
-        p.sendMessage(m.get("quest-claimed", "name", q.name()));
-        flush(p.getUniqueId());
+        int online = cfgInt("online-hours", DEF_ONLINE);
+        if (online > 0) out.add(new Objective("online", "Online đủ (giờ)", online));
+        return out;
     }
 
-    // ---------- nap / luu ----------
-    public void loadPlayer(UUID id) {
-        Database db = plugin.database();
-        List<String> periods = List.of(periodKey("DAILY"), periodKey("WEEKLY"));
-        db.async(() -> db.loadQuests(id.toString(), periods)).thenAccept(rows -> {
-            Map<String, int[]> map = data.computeIfAbsent(id, k -> new ConcurrentHashMap<>());
-            for (Database.QuestRow r : rows) {
-                String k = r.questId() + "|" + r.periodKey();
-                int[] cur = map.get(k);
-                if (cur == null) map.put(k, new int[]{r.progress(), r.claimed(), 0});
-                else { cur[0] = Math.max(cur[0], r.progress()); cur[1] = Math.max(cur[1], r.claimed()); }
-            }
-        }).exceptionally(e -> null);
-        db.async(() -> db.loadStreak(id.toString())).thenAccept(row -> {
-            if (row == null) return;
-            Streak st = streaks.computeIfAbsent(id, k -> new Streak());
-            st.lastDay = row.lastDay() == null ? "" : row.lastDay();
-            st.streak = row.streak();
-            st.best = row.best();
-        }).exceptionally(e -> null);
+    /** Nhiệm vụ còn đang chạy với người chơi này không. */
+    public boolean active(Player p) {
+        return settings.extraSlotEnabled() && settings.questEnabled() && !manager.hasExtraSlot(p);
     }
 
-    public void unload(UUID id) {
-        flush(id);
-        data.remove(id);
-        streaks.remove(id);
-    }
+    // ------------------------------------------------------------------
+    //  Tiến độ (lưu dạng "khóa=số;khóa=số" trong dữ liệu người chơi)
+    // ------------------------------------------------------------------
 
-    public void flushAll() {
-        for (UUID id : new ArrayList<>(data.keySet())) flush(id);
-    }
-
-    private void flush(UUID id) {
-        Map<String, int[]> map = data.get(id);
-        if (map == null) return;
-        List<Dirty> dirty = new ArrayList<>();
-        for (Map.Entry<String, int[]> en : map.entrySet()) {
-            int[] e = en.getValue();
-            if (e[2] == 1) {
-                e[2] = 0;
-                dirty.add(new Dirty(en.getKey(), e[0], e[1]));
+    private Map<String, Integer> read(Player p) {
+        Map<String, Integer> m = new HashMap<>();
+        String s = p.getPersistentDataContainer().get(questKey, PersistentDataType.STRING);
+        if (s == null || s.isEmpty()) return m;
+        for (String part : s.split(";")) {
+            int i = part.lastIndexOf('=');
+            if (i <= 0) continue;
+            try {
+                m.put(part.substring(0, i), Integer.parseInt(part.substring(i + 1)));
+            } catch (NumberFormatException ignored) {
+                // bỏ qua mục hỏng
             }
         }
-        if (dirty.isEmpty()) return;
-        Database db = plugin.database();
-        db.async(() -> {
-            for (Dirty d : dirty) {
-                String[] kp = d.key().split("\\|", 2);
-                if (kp.length == 2) db.saveQuest(id.toString(), kp[0], kp[1], d.progress(), d.claimed());
+        return m;
+    }
+
+    private void write(Player p, Map<String, Integer> m) {
+        StringBuilder sb = new StringBuilder();
+        for (Map.Entry<String, Integer> e : m.entrySet()) {
+            if (sb.length() > 0) sb.append(';');
+            sb.append(e.getKey()).append('=').append(e.getValue());
+        }
+        p.getPersistentDataContainer().set(questKey, PersistentDataType.STRING, sb.toString());
+    }
+
+    /** Những người chơi (UUID) đã hạ gục - mỗi người chỉ tính MỘT lần mãi mãi. */
+    private Set<String> victims(Player p) {
+        Set<String> out = new LinkedHashSet<>();
+        String s = p.getPersistentDataContainer().get(victimsKey, PersistentDataType.STRING);
+        if (s == null || s.isEmpty()) return out;
+        for (String part : s.split(",")) {
+            if (!part.isEmpty()) out.add(part);
+        }
+        return out;
+    }
+
+    /** Số giờ đã online: dùng thống kê thời gian chơi của server, không có thì dùng số phút plugin tự đếm. */
+    public double playHours(Player p) {
+        try {
+            return p.getStatistic(Statistic.PLAY_ONE_MINUTE) / 20.0 / 3600.0;
+        } catch (Throwable t) {
+            return read(p).getOrDefault("playmin", 0) / 60.0;
+        }
+    }
+
+    /** Tiến độ hiện tại của một mục tiêu. */
+    public int progress(Player p, String key) {
+        if (key.equals("players")) return victims(p).size();
+        if (key.equals("online")) return (int) playHours(p);
+        return read(p).getOrDefault(key, 0);
+    }
+
+    /** Xóa tiến độ nhiệm vụ (admin). Không đụng tới ô thứ 4 đã mở. */
+    public void reset(Player p) {
+        p.getPersistentDataContainer().remove(questKey);
+        p.getPersistentDataContainer().remove(victimsKey);
+    }
+
+    private Objective find(String key) {
+        for (Objective o : objectives()) {
+            if (o.key.equals(key)) return o;
+        }
+        return null;
+    }
+
+    /** Gọi sau khi một mục tiêu tăng: báo hoàn thành mục tiêu và kiểm tra mở khóa. */
+    private void afterChange(Player p, String key, int before, int after) {
+        Objective o = find(key);
+        if (o != null && before < o.target && after >= o.target) {
+            p.sendMessage("§6✦ Nhiệm vụ ô thứ 4: §a✔ Hoàn thành mục tiêu §f" + o.label + "§a!");
+            Fx.actionBar(p, "§6✦ Hoàn thành: §f" + o.label);
+            p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.8f, 1.4f);
+        }
+        check(p);
+    }
+
+    private void inc(Player p, String key) {
+        Map<String, Integer> m = read(p);
+        int before = m.getOrDefault(key, 0);
+        m.put(key, before + 1);
+        write(p, m);
+        afterChange(p, key, before, before + 1);
+    }
+
+    /** Đủ mọi mục tiêu thì mở khóa. Không có mục tiêu nào thì không tự mở (chỉ admin cấp). */
+    public void check(Player p) {
+        if (!active(p)) return;
+        List<Objective> obj = objectives();
+        if (obj.isEmpty()) return;
+        for (Objective o : obj) {
+            if (progress(p, o.key) < o.target) return;
+        }
+        manager.setExtraSlot(p, true);
+        announceUnlock(p, true);
+    }
+
+    /** Mục tiêu online: báo khi vừa đủ giờ, rồi kiểm tra mở khóa. */
+    private void checkOnline(Player p) {
+        Objective o = find("online");
+        if (o == null) return;
+        if (progress(p, "online") >= o.target) {
+            Map<String, Integer> m = read(p);
+            if (m.getOrDefault("online_done", 0) == 0) {
+                m.put("online_done", 1);
+                write(p, m);
+                afterChange(p, "online", o.target - 1, o.target);
+                return;
             }
-            return null;
-        }).exceptionally(e -> {
-            plugin.getLogger().warning("Khong luu duoc tien do nhiem vu: " + e.getMessage());
-            return null;
-        });
+        }
+        check(p);
     }
 
-    // ---------- chuoi ngay tham gia (streak) ----------
-    /** Goi moi khi nguoi choi vao Dungeon: cap nhat nhiem vu JOIN_DUNGEON va streak. */
-    public void onDungeonJoin(Player p) {
-        progress(p.getUniqueId(), "JOIN_DUNGEON", "", 1);
-        touchStreak(p);
+    /** Giữ lại cho tương thích: nhiệm vụ mới không còn đếm số lần kết hợp / sưu tầm nguyên tố. */
+    public void onFuse(Player p) {
+        // không dùng nữa
     }
 
-    private void touchStreak(Player p) {
-        UUID id = p.getUniqueId();
-        LocalDate today = LocalDate.now();
-        String t = today.toString();
-        Streak st = streaks.computeIfAbsent(id, k -> new Streak());
-        if (t.equals(st.lastDay)) return;
-        st.streak = today.minusDays(1).toString().equals(st.lastDay) ? st.streak + 1 : 1;
-        st.best = Math.max(st.best, st.streak);
-        st.lastDay = t;
-        p.sendMessage(plugin.messages().get("streak-up", "days", st.streak, "bonus", (int) Math.round(streakBonus(id) * 100)));
-
-        final String last = st.lastDay;
-        final int s = st.streak;
-        final int b = st.best;
-        Database db = plugin.database();
-        db.async(() -> { db.saveStreak(id.toString(), last, s, b); return null; }).exceptionally(e -> null);
+    public void refreshOwned(Player p) {
+        // không dùng nữa
     }
 
-    public int effectiveStreak(UUID id) {
-        Streak st = streaks.get(id);
-        if (st == null) return 0;
-        LocalDate today = LocalDate.now();
-        if (today.toString().equals(st.lastDay) || today.minusDays(1).toString().equals(st.lastDay)) return st.streak;
-        return 0;
+    /**
+     * Ghi nhận một cổng dungeon đã hoàn thành (dùng cho lệnh /nguyento quest dungeon, plugin dungeon gọi bằng lệnh khi người chơi
+     * thắng cổng). 'rank' có thể null (khi đó coi như đạt). Trả về null nếu thành công, ngược lại là lý do không tính.
+     */
+    public String addDungeon(Player p, String rank) {
+        if (!active(p)) return "Người chơi không còn nhiệm vụ này (đã mở khóa ô thứ 4 hoặc nhiệm vụ đang tắt).";
+        if (cfgInt("dungeon-gates", DEF_DUNGEON) <= 0) return "Mục tiêu cổng dungeon đang tắt trong config.";
+        if (rank != null) {
+            int got = rankIndex(rank);
+            if (got < 0) return "Rank '" + rank + "' không có trong danh sách dungeon-ranks.";
+            int need = rankIndex(minRank());
+            if (need >= 0 && got < need) {
+                return "Cổng rank " + rank + " thấp hơn rank tối thiểu (" + minRank() + ") nên không được tính.";
+            }
+        }
+        inc(p, "dungeon");
+        Fx.actionBar(p, "§6✦ Nhiệm vụ ô thứ 4: cổng dungeon §f" + progress(p, "dungeon") + "§7/§f" + cfgInt("dungeon-gates", DEF_DUNGEON));
+        return null;
     }
 
-    public int bestStreak(UUID id) {
-        Streak st = streaks.get(id);
-        return st == null ? 0 : st.best;
+    // ------------------------------------------------------------------
+    //  Hiển thị
+    // ------------------------------------------------------------------
+
+    public List<String> lines(Player p) {
+        List<String> out = new ArrayList<>();
+        if (!settings.extraSlotEnabled()) {
+            out.add("§7Ô nguyên tố thứ 4 đang bị tắt trong config.");
+            return out;
+        }
+        if (manager.hasExtraSlot(p)) {
+            out.add("§a✔ Bạn đã mở khóa ô nguyên tố thứ 4!");
+            return out;
+        }
+        if (!settings.questEnabled()) {
+            out.add("§7Ô nguyên tố thứ 4 chỉ do admin cấp.");
+            return out;
+        }
+        for (Objective o : objectives()) {
+            int cur = Math.min(o.target, progress(p, o.key));
+            boolean done = cur >= o.target;
+            out.add((done ? "§a✔ " : "§7• ") + o.label + "§7: " + (done ? "§a" : "§f") + cur + "§7/§f" + o.target);
+        }
+        if (out.isEmpty()) out.add("§7Ô nguyên tố thứ 4 chỉ do admin cấp.");
+        return out;
     }
 
-    /** Bonus ty le roi theo chuoi ngay: +2%/ngay, toi da +20% (chinh trong config quests.*). */
-    public double streakBonus(UUID id) {
-        int s = effectiveStreak(id);
-        if (s <= 1) return 0;
-        double per = plugin.getConfig().getDouble("quests.streak-bonus-per-day", 0.02);
-        double max = plugin.getConfig().getDouble("quests.streak-max-bonus", 0.20);
-        return Math.min(max, per * (s - 1));
+    public void announceUnlock(Player p, boolean broadcast) {
+        p.sendTitle("§6§l✦ MỞ KHÓA ✦", "§eÔ nguyên tố thứ 4 đã sẵn sàng!", 10, 70, 20);
+        p.sendMessage("§6✦ Chúc mừng! Bạn đã mở khóa §eô nguyên tố thứ 4§6. Gõ §f/nguyento §6để trang bị thêm.");
+        p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 0.8f);
+        p.playSound(p.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
+        if (Vfx.on()) {
+            Location l = p.getLocation();
+            Vfx.helix(l.getWorld(), l, 1.4, 2.4, 0, 3, Color.fromRGB(255, 215, 0), Color.fromRGB(255, 255, 235),
+                    org.bukkit.Particle.END_ROD);
+            Vfx.flash(l.getWorld(), l.clone().add(0, 1, 0));
+        }
+        if (broadcast && settings.cfg().getBoolean("extra-slot.broadcast", true)) {
+            Bukkit.broadcastMessage("§6✦ §e" + p.getName() + " §7đã hoàn thành nhiệm vụ khó và mở khóa §6ô nguyên tố thứ 4§7!");
+        }
+    }
+
+    // ------------------------------------------------------------------
+    //  Sự kiện
+    // ------------------------------------------------------------------
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onDeath(EntityDeathEvent e) {
+        LivingEntity dead = e.getEntity();
+        Player killer = dead.getKiller();
+        if (killer == null || killer.equals(dead) || !active(killer)) return;
+        if (settings.cfg().getBoolean("extra-slot.quest.require-equipped", true)
+                && manager.getEquipped(killer).isEmpty()) return;
+
+        if (dead instanceof Player) {
+            int need = cfgInt("kill-players", DEF_PLAYERS);
+            if (need <= 0) return;
+            Set<String> seen = victims(killer);
+            String victim = dead.getUniqueId().toString();
+            if (seen.contains(victim)) return; // giết lại cùng một người không tính
+            int before = seen.size();
+            seen.add(victim);
+            killer.getPersistentDataContainer().set(victimsKey, PersistentDataType.STRING, String.join(",", seen));
+            Fx.actionBar(killer, "§6✦ Nhiệm vụ ô thứ 4: người chơi khác nhau §f" + seen.size() + "§7/§f" + need);
+            afterChange(killer, "players", before, seen.size());
+            return;
+        }
+
+        if (dead instanceof Enemy && cfgInt("kill-mobs", DEF_MOBS) > 0) {
+            inc(killer, "mobs");
+        }
     }
 }

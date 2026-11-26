@@ -1,14 +1,17 @@
-name: AstraXDungeon
-version: 0.4.0
-main: com.astrax.dungeon.AstraXDungeon
-api-version: '1.21'
-description: The Ultimate BoxMine Dungeon System
-softdepend: [MythicMobs, Vault, PlaceholderAPI, WorldGuard, WorldEdit]
+name: NguyenTo
+version: 1.10.0
+main: vn.nguyento.NguyenToPlugin
+api-version: '1.20'
+description: He thong nguyen to bay quanh nguoi choi, buff, chieu thuc, cuon giay
 commands:
-  dungeon:
-    description: Menu Dungeon
-    aliases: [dg]
-    usage: /dungeon <next|list|join|leave|info|admin>
+  nguyento:
+    description: Mo menu nguyen to
+    aliases: [nt, element]
+    usage: /nguyento
 permissions:
-  astrax.dungeon.use: { default: true }
-  astrax.dungeon.admin: { default: op }
+  nguyento.use:
+    description: Dung menu nguyen to
+    default: true
+  nguyento.admin:
+    description: Cho cuon giay / mo khoa / reload
+    default: op
